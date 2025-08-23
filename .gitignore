@@ -53,3 +53,12 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Premake5
+Makefile
+bin
+obj
+*.make
+
+# vscode
+.vscode/
