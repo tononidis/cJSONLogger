@@ -62,3 +62,7 @@ obj
 
 # vscode
 .vscode/
+
+#Example App
+log.json
+*_log.json

@@ -2,7 +2,7 @@
 
 int main(void)
 {
-    cJsonLoggerInit();
+    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json");
 
     char* level11[] = { "foo" };
 
@@ -13,14 +13,15 @@ int main(void)
 
     char* level12[] = { "other" };
 
-    JSON_LOGGER(level11, "value %d", 1);
-    JSON_LOGGER(level21, "value %d", 2);
-    JSON_LOGGER(level22, "value %d", 3);
-    JSON_LOGGER(level3, "value %d", 4);
-    JSON_LOGGER(level12, "value %d", 5);
+    // CJSON_LOG_DEBUG(level11, "value %d", 1);
+    // CJSON_LOG_INFO(level21, "value %d", 2);
+    // CJSON_LOG_WARN(level22, "value %d", 3);
+    // CJSON_LOG_ERROR(level3, "value %d", 4);
+    // CJSON_LOG_CRITICAL(level12, "value %d", 5);
+    // CJSON_LOG_CRITICAL(level12, "value %d", 5);
 
-    cJsonLoggerDump();
-    cJsonLoggerDelete();
+    // cJSONLoggerDump();
+    // cJSONLoggerDestroy();
 
     return 0;
 }
