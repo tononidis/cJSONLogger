@@ -73,3 +73,26 @@ project "cJSONLoggerExample"
 	{
 		"cJSONLogger"
 	}
+
+project "cJSONLoggerTests"
+	kind "ConsoleApp"
+	language "C"
+	cdialect "Default"
+
+	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
+
+	files
+	{
+		"tests/*.c"
+	}
+
+	includedirs
+	{
+		"include"
+	}
+
+	links
+	{
+		"cJSONLogger"
+	}
