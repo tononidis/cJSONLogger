@@ -1,5 +1,5 @@
 /**
- * @author Stefanos Tonondis
+ * @author Stefanos Tononidis
  */
 
 #ifndef CJSON_LOGGER_H

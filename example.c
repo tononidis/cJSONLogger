@@ -1,5 +1,5 @@
 /**
- * @author Stefanos Tonondis
+ * @author Stefanos Tononidis
  */
 
 #include <cJSONLogger.h>
