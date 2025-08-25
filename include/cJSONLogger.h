@@ -59,9 +59,9 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define CJSON_LOG(jsonPath, logLevel, fmt, ...)                                                                                            \
-    do {                                                                                                                                   \
-        cJSONLoggerLog(jsonPath, sizeof(jsonPath) / sizeof(jsonPath[0]), logLevel, "%s$$%d$$" fmt, __FILENAME__, __LINE__, ##__VA_ARGS__); \
+#define CJSON_LOG(jsonPath, logLevel, fmt, ...)                                                                                                              \
+    do {                                                                                                                                                     \
+        cJSONLoggerLog(jsonPath, sizeof(jsonPath) / sizeof(jsonPath[0]), logLevel, "%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
     } while (0);
 
 #define CJSON_LOG_CRITICAL(jsonPath, fmt, ...) \

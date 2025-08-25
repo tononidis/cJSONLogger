@@ -198,6 +198,7 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
 
     char* logMsgDup = strdup(logMsg);
     char* fileName = strtok(logMsgDup, "$$");
+    char* funcName = strtok(NULL, "$$");
     char* fileLine = strtok(NULL, "$$");
     char* userLog = strtok(NULL, "$$");
 
@@ -213,12 +214,16 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
     cJSON_AddItemToObject(log, "Time", cJSON_CreateString(timeStr));
     cJSON_AddItemToObject(log, "LogLevel", cJSON_CreateString(cJSONLoggerGetLogLevelStr(logLevel)));
 
-    if (fileLine != NULL) {
+    if (fileName != NULL) {
         cJSON_AddItemToObject(log, "FileName", cJSON_CreateString(fileName));
     }
 
+    if (funcName != NULL) {
+        cJSON_AddItemToObject(log, "FuncName", cJSON_CreateString(funcName));
+    }
+
     if (fileLine != NULL) {
-        cJSON_AddItemToObject(log, "FileLine", cJSON_CreateString(fileLine));
+        cJSON_AddItemToObject(log, "FileLine", cJSON_CreateNumber(atoi(fileLine)));
     }
 
     if (userLog != NULL) {
