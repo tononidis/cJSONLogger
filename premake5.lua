@@ -7,14 +7,15 @@ workspace "cJSONLogger"
 	}
 
 	outputdir = "%{cfg.buildcfg}"
+	
+	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
 
-project "cJSONLogger"
-	kind "SharedLib"
 	language "C"
 	cdialect "Default"
 
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
+project "cJSONLogger"
+	kind "SharedLib"
 
 	files
 	{
@@ -34,30 +35,25 @@ project "cJSONLogger"
 	}
 
 	filter "configurations:Debug"
-		defines "DEBUG"
+		defines "CJSONLOGGER_DEBUG"
 		runtime "Debug"
 		symbols "on"
 		optimize "off"
 
 	filter "configurations:Release"
-		defines "RELEASE"
+		defines "CJSONLOGGER_RELEASE"
 		runtime "Release"
 		symbols "on"
 		optimize "on"
 
 	filter "configurations:Dist"
-		defines "DIST"
+		defines "CJSONLOGGER_DIST"
 		runtime "Release"
 		symbols "off"
 		optimize "on"
 
 project "cJSONLoggerExample"
 	kind "ConsoleApp"
-	language "C"
-	cdialect "Default"
-
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{
@@ -76,11 +72,6 @@ project "cJSONLoggerExample"
 
 project "cJSONLoggerTests"
 	kind "ConsoleApp"
-	language "C"
-	cdialect "Default"
-
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/obj/" .. outputdir .. "/%{prj.name}")
 
 	files
 	{
@@ -89,6 +80,7 @@ project "cJSONLoggerTests"
 
 	includedirs
 	{
+		"cJSON",
 		"include"
 	}
 
@@ -96,3 +88,21 @@ project "cJSONLoggerTests"
 	{
 		"cJSONLogger"
 	}
+
+	filter "configurations:Debug"
+		defines "CJSONLOGGER_TEST_DEBUG"
+		runtime "Debug"
+		symbols "on"
+		optimize "off"
+
+	filter "configurations:Release"
+		defines "CJSONLOGGER_TEST_RELEASE"
+		runtime "Release"
+		symbols "on"
+		optimize "on"
+
+	filter "configurations:Dist"
+		defines "CJSONLOGGER_TEST_DIST"
+		runtime "Release"
+		symbols "off"
+		optimize "on"

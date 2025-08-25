@@ -13,6 +13,24 @@
 #define MAX_LOG_COUNT 500
 #define MAX_LOG_ROTATION_FILES 5
 
+#ifdef CJSONLOGGER_DEBUG
+#define DEBUG_ASSERT(expr) assert(expr)
+#undef CJSONLOGGER_RELEASE
+#undef CJSONLOGGER_DIST
+#endif
+
+#ifdef CJSONLOGGER_RELEASE
+#define DEBUG_ASSERT(expr) ((void)0)
+#undef CJSONLOGGER_DEBUG
+#undef CJSONLOGGER_DIST
+#endif
+
+#ifdef CJSONLOGGER_DIST
+#define DEBUG_ASSERT(expr) ((void)0)
+#undef CJSONLOGGER_DEBUG
+#undef CJSONLOGGER_RELEASE
+#endif
+
 static cJSON* s_g_rootNode = NULL;
 static pthread_mutex_t s_g_rootNodeMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -57,18 +75,23 @@ void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
     if (s_g_rootNode == NULL) {
         s_g_rootNode = cJSON_CreateObject();
     }
-    assert(s_g_rootNode != NULL && "Failed to create JSON root");
+
+    DEBUG_ASSERT(s_g_rootNode != NULL && "Failed to create JSON root");
+
     pthread_mutex_unlock(&s_g_rootNodeMutex);
 
     cJSONLoggerSetLogLevel(logLevel);
 
     pthread_mutex_lock(&s_g_cLoggerMutex);
     s_g_filePath = strdup(filePath);
-    assert(s_g_filePath != NULL && "Failed to duplicate log file path");
+
+    DEBUG_ASSERT(s_g_filePath != NULL && "Failed to duplicate log file path");
+
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
     int ret = atexit(cJSONLoggerDestroy);
-    assert(ret == 0 && "Failed to register exit handler");
+
+    DEBUG_ASSERT(ret == 0 && "Failed to register exit handler");
 }
 
 void cJSONLoggerDestroy()
@@ -114,7 +137,9 @@ static void cJSONLoggerRotateLogs()
 
     if (s_g_rotatedFilesQueue == NULL) {
         s_g_rotatedFilesQueue = (Queue_s*)malloc(sizeof(Queue_s));
-        assert(s_g_rotatedFilesQueue != NULL && "Failed to allocate memory for rotated files queue");
+
+        DEBUG_ASSERT(s_g_rotatedFilesQueue != NULL && "Failed to allocate memory for rotated files queue");
+
         memset(s_g_rotatedFilesQueue, 0, sizeof(*s_g_rotatedFilesQueue));
     }
 
@@ -122,7 +147,8 @@ static void cJSONLoggerRotateLogs()
     unsigned int rotatedFileLen = strlen(filePath) + strlen(timeStr) + 2;
 
     s_g_filePath = (char*)malloc(rotatedFileLen);
-    assert(s_g_filePath != NULL && "Failed to allocate memory for log file path");
+
+    DEBUG_ASSERT(s_g_filePath != NULL && "Failed to allocate memory for log file path");
 
     snprintf(s_g_filePath, rotatedFileLen, "%s_%s", timeStr, filePath);
 
@@ -257,7 +283,8 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
     }
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
-    assert(s_g_rootNode != NULL && "cJSONlogger was not initialized");
+    DEBUG_ASSERT(s_g_rootNode != NULL && "cJSONlogger was not initialized");
+
     const char* nodeName = jsonPath[0];
 
     pthread_mutex_lock(&s_g_rootNodeMutex);
@@ -297,7 +324,7 @@ void cJSONLoggerDump()
     FILE* file = fopen(s_g_filePath, "w");
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
-    assert(file != NULL);
+    DEBUG_ASSERT(file != NULL);
 
     fprintf(file, "%s", string);
 

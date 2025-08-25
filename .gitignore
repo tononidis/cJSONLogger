@@ -66,3 +66,6 @@ obj
 #Example App
 log.json
 *_log.json
+
+#Tests
+test_report.json
