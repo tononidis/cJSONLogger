@@ -6,13 +6,21 @@
 #include <unistd.h>
 
 #define SIGNAL_BASE 128
-#define LOG_FILE "log.json"
 
 typedef enum ReturnStatus {
     OK = 0,
     ERROR,
 } ReturnStatus_e;
 
+/**
+ * @brief Read the contents of a file into a string.
+ *
+ * @param fileName The name of the file to read.
+ *
+ * @warning returned string must be freed when no longer needed.
+ *
+ * @return char* A pointer to the contents of the file, or NULL on failure.
+ */
 static char* readFile(const char* fileName)
 {
     FILE* file = fopen(fileName, "r");
@@ -41,12 +49,24 @@ static char* readFile(const char* fileName)
     return logData;
 }
 
+/**
+ * @brief Test the logging behavior when the severity level is not reached but the cJSONLogger is not initialized.
+ * *
+ * @return int, OK if the test passes, ERROR otherwise, values defined in enum TestStatus.
+ */
 static int test_cJSONLogger_log_without_init_with_disabled_severity(void)
 {
     CJSON_LOG_INFO(NULL, "");
     return OK;
 }
 
+/**
+ * @brief Test the logging behavior when the severity level is reached but the cJSONLogger is not initialized.
+ *
+ * @warning This test failed an assertion debug builds.
+ *
+ * @return int, OK if the test passes, ERROR otherwise, values defined in enum TestStatus.
+ */
 static int test_cJSONLogger_log_without_init_with_enabled_severity(void)
 {
     cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_INFO);
@@ -54,6 +74,11 @@ static int test_cJSONLogger_log_without_init_with_enabled_severity(void)
     return OK;
 }
 
+/**
+ * @brief Test the logging behavior with one object.
+ * *
+ * @return int, OK if the test passes, ERROR otherwise, values defined in enum TestStatus.
+ */
 static int test_cJSONLogger_log_one_node(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
@@ -153,6 +178,11 @@ static int test_cJSONLogger_log_one_node(void)
     return ret;
 }
 
+/**
+ * @brief Test the logging behavior with three nested objects.
+ * *
+ * @return int, OK if the test passes, ERROR otherwise, values defined in enum TestStatus.
+ */
 static int test_cJSONLogger_log_three_nodes(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
@@ -262,6 +292,11 @@ static int test_cJSONLogger_log_three_nodes(void)
     return ret;
 }
 
+/**
+ * @brief Test the logging behavior when the severity level is not reached.
+ * *
+ * @return int, OK if the test passes, ERROR otherwise, values defined in enum TestStatus.
+ */
 static int test_cJSONLogger_severity_not_reached(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
@@ -290,6 +325,11 @@ static int test_cJSONLogger_severity_not_reached(void)
     return ret;
 }
 
+/**
+ * @brief Test the logging behavior when the severity level is reached.
+ *
+ * @return int, OK if the test passes, ERROR otherwise, values defined in enum TestStatus.
+ */
 static int test_cJSONLogger_severity_reached(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
@@ -320,6 +360,15 @@ static int test_cJSONLogger_severity_reached(void)
     return ret;
 }
 
+/*
+ * @brief Entry point for cJSONLogger tests.
+ *
+ * @note Some tests run differently on different build configurations.
+ *
+ * @warning the initTestSuite() should always be called before any tests are run.
+ *
+ * @return int, always 0.
+ */
 int main(void)
 {
     initTestSuite();
@@ -332,6 +381,7 @@ int main(void)
 
 #ifdef CJSONLOGGER_TEST_DEBUG
 
+    // The bellow test expects an assert to fail only in debug builds, raising an abort() (SIGABRT)
     RUN_TEST(SIGNAL_BASE + SIGABRT, test_cJSONLogger_log_without_init_with_enabled_severity);
 
 #else
@@ -339,10 +389,6 @@ int main(void)
     RUN_TEST(OK, test_cJSONLogger_log_without_init_with_enabled_severity);
 
 #endif
-
-    if (remove(LOG_FILE) != 0) {
-        fprintf(stderr, "Error deleting file [%s]", LOG_FILE);
-    }
 
     return 0;
 }

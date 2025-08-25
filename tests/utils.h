@@ -9,6 +9,7 @@
 #include <string.h>
 
 #define FUNC_NAME(fn) #fn
+#define LOG_FILE "log.json"
 #define MAX_TEST_NAME_LEN 128 + 1
 
 typedef enum TestStatus {
@@ -23,22 +24,44 @@ typedef struct TestInfo {
 
 static cJSON* s_g_testStatistics = NULL;
 
+/**
+ * @brief Destroys the test suite, cleans up resources and generates the test report.
+ *
+ * @note This function is called automatically at program exit to ensure all resources are released and the test report is generated.
+ *
+ */
 static void destroyTestSuite(void)
 {
-    char* string = cJSON_Print(s_g_testStatistics);
+    if (s_g_testStatistics != NULL) {
+        char* testsStatisticsStr = cJSON_Print(s_g_testStatistics);
+        assert(testsStatisticsStr != NULL);
 
-    assert(string != NULL);
+        cJSON_Delete(s_g_testStatistics);
+        s_g_testStatistics = NULL;
 
-    FILE* file = fopen("test_report.json", "w");
+        FILE* file = fopen("test_report.json", "w");
+        assert(file != NULL);
 
-    assert(file != NULL);
+        fprintf(file, "%s", testsStatisticsStr);
 
-    fprintf(file, "%s", string);
+        fclose(file);
+        file = NULL;
 
-    fclose(file);
-    free(string);
+        free(testsStatisticsStr);
+        testsStatisticsStr = NULL;
+    }
+
+    if (remove(LOG_FILE) != 0) {
+        printf("Could not delete file [%s]", LOG_FILE);
+    }
 }
 
+/**
+ * @brief Initializes the test suite and sets up necessary resources.
+ *
+ * @note This function registers and atexit callback to destroy the test suite.
+ *
+ */
 static void initTestSuite(void)
 {
     s_g_testStatistics = cJSON_CreateObject();
@@ -63,6 +86,13 @@ static void initTestSuite(void)
     assert(ret == 0);
 }
 
+/**
+ * @brief Pushes the test statistics for a single test case.
+ *
+ * @param testInfo Pointer to the TestInfo structure containing test information.
+ * @param expectedResult The expected result (exit status) of the test.
+ * @param childExitStatus The actual result (exit status) of the test.
+ */
 static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitStatus)
 {
     cJSON* testStatusArray = NULL;

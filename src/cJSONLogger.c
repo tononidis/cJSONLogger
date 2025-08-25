@@ -218,7 +218,6 @@ static void cJSONLoggerRotateLogs()
 
 static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const char* logMsg)
 {
-
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
 
