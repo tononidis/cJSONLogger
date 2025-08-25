@@ -15,15 +15,53 @@
 #define MAX_LOG_ROTATION_FILES 5
 
 #ifdef CJSONLOGGER_DEBUG
-#define DEBUG_ASSERT(expr) assert(expr)
+#define CJSON_LOGGER_ASSERT_EQ(expr, expected) \
+    do {                                       \
+        assert(expr == expected);              \
+    } while (0);
+
+#define CJSON_LOGGER_ASSERT_NEQ(expr, expected) \
+    do {                                        \
+        assert(expr != expected);               \
+    } while (0);
 #endif
 
 #ifdef CJSONLOGGER_RELEASE
-#define DEBUG_ASSERT(expr) ((void)0)
+#define CJSON_LOGGER_ASSERT_EQ(expr, expected)                                                       \
+    do {                                                                                             \
+        if (expr != expected) {                                                                      \
+            fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
+            return;                                                                                  \
+        }                                                                                            \
+    } while (0);
+
+#define CJSON_LOGGER_ASSERT_NEQ(expr, expected)                                                      \
+    do {                                                                                             \
+        if (expr == expected) {                                                                      \
+            fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
+            return;                                                                                  \
+        }                                                                                            \
+    } while (0);
+
 #endif
 
 #ifdef CJSONLOGGER_DIST
-#define DEBUG_ASSERT(expr) ((void)0)
+#define CJSON_LOGGER_ASSERT_EQ(expr, expected)                                                       \
+    do {                                                                                             \
+        if (expr != expected) {                                                                      \
+            fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
+            return;                                                                                  \
+        }                                                                                            \
+    } while (0);
+
+#define CJSON_LOGGER_ASSERT_NEQ(expr, expected)                                                      \
+    do {                                                                                             \
+        if (expr == expected) {                                                                      \
+            fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
+            return;                                                                                  \
+        }                                                                                            \
+    } while (0);
+
 #endif
 
 static cJSON* s_g_rootNode = NULL;
@@ -71,7 +109,7 @@ void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
         s_g_rootNode = cJSON_CreateObject();
     }
 
-    DEBUG_ASSERT(s_g_rootNode != NULL && "Failed to create JSON root");
+    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
 
     pthread_mutex_unlock(&s_g_rootNodeMutex);
 
@@ -80,13 +118,13 @@ void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
     pthread_mutex_lock(&s_g_cLoggerMutex);
     s_g_filePath = strdup(filePath);
 
-    DEBUG_ASSERT(s_g_filePath != NULL && "Failed to duplicate log file path");
+    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
 
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
     int ret = atexit(cJSONLoggerDestroy);
 
-    DEBUG_ASSERT(ret == 0 && "Failed to register exit handler");
+    CJSON_LOGGER_ASSERT_EQ(ret, 0);
 }
 
 void cJSONLoggerDestroy()
@@ -133,7 +171,7 @@ static void cJSONLoggerRotateLogs()
     if (s_g_rotatedFilesQueue == NULL) {
         s_g_rotatedFilesQueue = (Queue_s*)malloc(sizeof(Queue_s));
 
-        DEBUG_ASSERT(s_g_rotatedFilesQueue != NULL && "Failed to allocate memory for rotated files queue");
+        CJSON_LOGGER_ASSERT_NEQ(s_g_rotatedFilesQueue, NULL);
 
         memset(s_g_rotatedFilesQueue, 0, sizeof(*s_g_rotatedFilesQueue));
     }
@@ -143,7 +181,7 @@ static void cJSONLoggerRotateLogs()
 
     s_g_filePath = (char*)malloc(rotatedFileLen);
 
-    DEBUG_ASSERT(s_g_filePath != NULL && "Failed to allocate memory for log file path");
+    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
 
     snprintf(s_g_filePath, rotatedFileLen, "%s_%s", timeStr, filePath);
 
@@ -283,7 +321,7 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
     }
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
-    DEBUG_ASSERT(s_g_rootNode != NULL && "cJSONlogger was not initialized");
+    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
 
     const char* nodeName = jsonPath[0];
 
@@ -324,7 +362,7 @@ void cJSONLoggerDump()
     FILE* file = fopen(s_g_filePath, "w");
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
-    DEBUG_ASSERT(file != NULL);
+    CJSON_LOGGER_ASSERT_NEQ(file, NULL);
 
     fprintf(file, "%s", string);
 

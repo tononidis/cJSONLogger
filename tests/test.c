@@ -11,7 +11,6 @@
 typedef enum ReturnStatus {
     OK = 0,
     ERROR,
-    FORK_EXITED // Will never be returned because the child process was terminated abnormally.
 } ReturnStatus_e;
 
 static char* readFile(const char* fileName)
@@ -27,7 +26,12 @@ static char* readFile(const char* fileName)
 
     char* logData = malloc(logSize + 1);
     if (logData != NULL) {
-        fread(logData, sizeof(char), logSize, file);
+        if (fread(logData, sizeof(char), logSize, file) != logSize) {
+            free(logData);
+            logData = NULL;
+            fclose(file);
+            return NULL;
+        }
         logData[logSize] = '\0';
     } else {
         return NULL;
@@ -47,7 +51,7 @@ static int test_cJSONLogger_log_without_init_with_enabled_severity(void)
 {
     cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_INFO);
     CJSON_LOG_INFO(NULL, "");
-    return FORK_EXITED;
+    return OK;
 }
 
 static int test_cJSONLogger_log_one_node(void)
@@ -326,14 +330,13 @@ int main(void)
     RUN_TEST(OK, test_cJSONLogger_severity_not_reached);
     RUN_TEST(OK, test_cJSONLogger_severity_reached);
 
-// TO-DO fix the below crashes
 #ifdef CJSONLOGGER_TEST_DEBUG
 
     RUN_TEST(SIGNAL_BASE + SIGABRT, test_cJSONLogger_log_without_init_with_enabled_severity);
 
 #else
 
-    RUN_TEST(SIGNAL_BASE + SIGSEGV, test_cJSONLogger_log_without_init_with_enabled_severity);
+    RUN_TEST(OK, test_cJSONLogger_log_without_init_with_enabled_severity);
 
 #endif
 
