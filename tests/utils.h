@@ -3,13 +3,13 @@
 
 #include <cJSON.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define FUNC_NAME(fn) #fn
 #define MAX_TEST_NAME_LEN 128 + 1
-#define VECTOR_INIT_CAPACITY 64
 
 typedef enum TestStatus {
     PASSED = 0,
@@ -27,7 +27,12 @@ static void destroyTestSuite(void)
 {
     char* string = cJSON_Print(s_g_testStatistics);
 
+    assert(string != NULL);
+
     FILE* file = fopen("test_report.json", "w");
+
+    assert(file != NULL);
+
     fprintf(file, "%s", string);
 
     fclose(file);
@@ -37,6 +42,7 @@ static void destroyTestSuite(void)
 static void initTestSuite(void)
 {
     s_g_testStatistics = cJSON_CreateObject();
+    assert(s_g_testStatistics != NULL);
 
 #ifdef CJSONLOGGER_TEST_DEBUG
     cJSON_AddItemToObject(s_g_testStatistics, "TestMode", cJSON_CreateString("Debug"));
@@ -53,7 +59,8 @@ static void initTestSuite(void)
     cJSON_AddItemToObject(s_g_testStatistics, "Passed", cJSON_CreateArray());
     cJSON_AddItemToObject(s_g_testStatistics, "Failed", cJSON_CreateArray());
 
-    atexit(destroyTestSuite);
+    int ret = atexit(destroyTestSuite);
+    assert(ret == 0);
 }
 
 static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitStatus)
@@ -65,7 +72,12 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
         testStatusArray = cJSON_GetObjectItem(s_g_testStatistics, "Failed");
     }
 
+    assert(testStatusArray != NULL);
+
     cJSON* report = cJSON_CreateObject();
+
+    assert(report != NULL);
+
     cJSON_AddItemToObject(report, "TestName", cJSON_CreateString(testInfo->name));
     cJSON_AddItemToObject(report, "expected", cJSON_CreateNumber(expectedResult));
     cJSON_AddItemToObject(report, "actual", cJSON_CreateNumber(childExitStatus));

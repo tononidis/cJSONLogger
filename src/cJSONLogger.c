@@ -1,5 +1,6 @@
 #include "cJSONLogger.h"
-#include "cJSON.h"
+
+#include <cJSON.h>
 
 #include <assert.h>
 #include <pthread.h>
@@ -15,20 +16,14 @@
 
 #ifdef CJSONLOGGER_DEBUG
 #define DEBUG_ASSERT(expr) assert(expr)
-#undef CJSONLOGGER_RELEASE
-#undef CJSONLOGGER_DIST
 #endif
 
 #ifdef CJSONLOGGER_RELEASE
 #define DEBUG_ASSERT(expr) ((void)0)
-#undef CJSONLOGGER_DEBUG
-#undef CJSONLOGGER_DIST
 #endif
 
 #ifdef CJSONLOGGER_DIST
 #define DEBUG_ASSERT(expr) ((void)0)
-#undef CJSONLOGGER_DEBUG
-#undef CJSONLOGGER_RELEASE
 #endif
 
 static cJSON* s_g_rootNode = NULL;
