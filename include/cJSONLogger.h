@@ -1,3 +1,7 @@
+/**
+ * @author Stefanos Tonondis
+ */
+
 #ifndef CJSON_LOGGER_H
 #define CJSON_LOGGER_H
 
@@ -14,7 +18,9 @@ typedef enum CJSON_LOG_LEVEL {
 } CJSON_LOG_LEVEL_E;
 
 /**
- * @brief Initialize the cJSON logger.
+ * @brief Initialize the cJSON logger and setup the resources.
+ *
+ * @warning This function must be called before any logging can occur.
  *
  * @param logLevel The starting log level severity threshold.
  * @param filePath Path to file where JSON logs will be stored.
@@ -24,6 +30,8 @@ void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath);
 
 /**
  * @brief Delete the cJSON logger and clean up resources.
+ *
+ * @note This function is registered with atexit() during initialization, so it will be called automatically at program exit.
  *
  */
 void cJSONLoggerDestroy();
@@ -51,7 +59,7 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
 void cJSONLoggerDump();
 
 /**
- * @brief
+ * @brief Sets the log level for the cJSON logger.
  *
  * @param logLevel The new log level severity threshold.
  */

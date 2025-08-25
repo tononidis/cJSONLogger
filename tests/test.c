@@ -1,3 +1,7 @@
+/**
+ * @author Stefanos Tonondis
+ */
+
 #include "utils.h"
 
 #include <cJSONLogger.h>
