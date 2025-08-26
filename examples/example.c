@@ -1,5 +1,9 @@
 /**
+ * @file example.c
+ * @brief This file contains an example usage of the cJSON logger library.
+ *
  * @author Stefanos Tononidis
+ * @date 2025-08-26
  */
 
 #include <cJSONLogger.h>

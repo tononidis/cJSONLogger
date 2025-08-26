@@ -1,5 +1,9 @@
 /**
+ * @file test.c
+ * @brief This file contains the tests for the cJSON logger library.
+ *
  * @author Stefanos Tononidis
+ * @date 2025-08-26
  */
 
 #include "utils.h"

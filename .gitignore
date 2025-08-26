@@ -69,3 +69,7 @@ log.json
 
 #Tests
 test_report.json
+
+#Doxygen
+docs/html/
+docs/latex/

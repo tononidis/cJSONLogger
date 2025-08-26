@@ -1,5 +1,9 @@
 /**
+ * @file cJSONLogger.h
+ * @brief This file contains the interface for the cJSON logger library.
+ *
  * @author Stefanos Tononidis
+ * @date 2025-08-26
  */
 
 #ifndef CJSON_LOGGER_H

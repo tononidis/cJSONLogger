@@ -57,7 +57,7 @@ project "cJSONLoggerExample"
 
 	files
 	{
-		"example.c"
+		"examples/example.c"
 	}
 
 	includedirs
