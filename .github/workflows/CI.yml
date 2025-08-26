@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install premake5
+      uses: abel0b/setup-premake@v2.4
+      with:
+        version: "5.0.0-beta7"
+    - name: Build and Test
+      run: |
+        premake5 gmake
+        make config=release
+        ./bin/Release/cJSONLoggerTests/cJSONLoggerTests
+    - name: Evaluate Test Results
+      run: |
+        NumOfFailedTests=$(jq '.Summary.Failed' test_report.json)
+        if [ "$NumOfFailedTests" -eq 0 ]; then
+          echo "All tests passed"
+        else
+          echo "Not all tests passed"
+          exit 1
+        fi

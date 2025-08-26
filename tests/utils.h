@@ -27,6 +27,7 @@ typedef struct TestInfo {
 } TestInfo_s;
 
 static cJSON* s_g_testStatistics = NULL;
+static pid_t s_g_pid = -1;
 
 /**
  * @brief Destroys the test suite, cleans up resources and generates the test report.
@@ -36,7 +37,29 @@ static cJSON* s_g_testStatistics = NULL;
  */
 static void destroyTestSuite(void)
 {
+    // Child seems to waste a few resources.
+    if (s_g_pid == 0) {
+        if (s_g_testStatistics != NULL) {
+            cJSON_Delete(s_g_testStatistics);
+            s_g_testStatistics = NULL;
+        }
+        return;
+    }
+
     if (s_g_testStatistics != NULL) {
+        cJSON* passed = cJSON_GetObjectItem(s_g_testStatistics, "Passed");
+        cJSON* failed = cJSON_GetObjectItem(s_g_testStatistics, "Failed");
+
+        assert(passed != NULL);
+        assert(failed != NULL);
+
+        cJSON_AddItemToObject(s_g_testStatistics, "Summary", cJSON_CreateObject());
+        cJSON* summary = cJSON_GetObjectItem(s_g_testStatistics, "Summary");
+        assert(summary != NULL);
+
+        cJSON_AddItemToObject(summary, "Passed", cJSON_CreateNumber(cJSON_GetArraySize(passed)));
+        cJSON_AddItemToObject(summary, "Failed", cJSON_CreateNumber(cJSON_GetArraySize(failed)));
+
         char* testsStatisticsStr = cJSON_Print(s_g_testStatistics);
         assert(testsStatisticsStr != NULL);
 
@@ -56,7 +79,7 @@ static void destroyTestSuite(void)
     }
 
     if (remove(LOG_FILE) != 0) {
-        printf("Could not delete file [%s]", LOG_FILE);
+        printf("Could not delete file [%s]\n", LOG_FILE);
     }
 }
 
@@ -125,7 +148,8 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
         int childExitStatus;                                                                                              \
         snprintf(testInfo.name, MAX_TEST_NAME_LEN, "%s", FUNC_NAME(func));                                                \
         printf("Running test [%s] ...\n", testInfo.name);                                                                 \
-        if (fork() == 0) {                                                                                                \
+        s_g_pid = fork();                                                                                                 \
+        if (s_g_pid == 0) {                                                                                               \
             return func(__VA_ARGS__);                                                                                     \
         } else {                                                                                                          \
             wait(&childExitStatus);                                                                                       \
