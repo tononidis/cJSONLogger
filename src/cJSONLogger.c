@@ -183,6 +183,10 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
     char* userLog = strtok(NULL, "$$");
 
     pthread_mutex_lock(&s_g_rootNodeMutex);
+    if (node == NULL) {
+        node = s_g_rootNode;
+    }
+
     if (cJSON_HasObjectItem(node, "logs") == 0) {
         cJSON_AddItemToObject(node, "logs", cJSON_CreateArray());
     }
@@ -252,7 +256,7 @@ static void cJSONLoggerLogRecur(char* jsonPath[], unsigned int size, cJSON* node
 
 void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
 {
-    if (size <= 0) {
+    if (size < 0) {
         return;
     }
 
@@ -262,6 +266,17 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
         return;
     }
     pthread_mutex_unlock(&s_g_cLoggerMutex);
+
+    va_list args;
+    va_start(args, fmt);
+    char logMsg[MAX_LOG_MSG_LEN];
+    vsnprintf(logMsg, sizeof(logMsg), fmt, args);
+    va_end(args);
+
+    if (size == 0) {
+        cJSONLoggerPushLog(NULL, logLevel, logMsg);
+        return;
+    }
 
     CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
 
@@ -274,12 +289,6 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
 
     cJSON* subNode = cJSON_GetObjectItem(s_g_rootNode, nodeName);
     pthread_mutex_unlock(&s_g_rootNodeMutex);
-
-    va_list args;
-    va_start(args, fmt);
-    char logMsg[MAX_LOG_MSG_LEN];
-    vsnprintf(logMsg, sizeof(logMsg), fmt, args);
-    va_end(args);
 
     if (size == 1) {
         cJSONLoggerPushLog(subNode, logLevel, logMsg);
