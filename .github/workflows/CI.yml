@@ -12,15 +12,20 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        submodules: true
+
     - name: Install premake5
       uses: abel0b/setup-premake@v2.4
       with:
         version: "5.0.0-beta7"
+
     - name: Build and Test
       run: |
         premake5 gmake
         make config=release
         ./bin/Release/cJSONLoggerTests/cJSONLoggerTests
+
     - name: Evaluate Test Results
       run: |
         NumOfFailedTests=$(jq '.Summary.Failed' test_report.json)
