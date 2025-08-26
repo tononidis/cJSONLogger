@@ -52,7 +52,7 @@ Due to the nature of standard logging always appending logs at the end of a file
 
 Instead the cJSONLogger stores the logs in memory using the cJSON module.
 
-The logs persist either when the application exits normally or with the cJSONLoggerDump function call.
+The logs persist either when the application exits normally or with a cJSONLoggerDump or cJSONLoggerRotate function call.
 
 This way we minimize writing to disk every time
 
@@ -70,6 +70,8 @@ When to many line of logs are written (MAX_LOG_COUNT = 500).
 The log file rotates and stores them on disk with a h_m_s_ns_<file_name> format.
 
 After MAX_LOG_ROTATION_FILES = 5 files are created the older file is removed in order to avoid filling up the disk.
+
+If application need to rotate logs earlier it can be done with cJSONLoggerRotate function call.
 
 If different config is needed the change the mentioned macros at src/cJSONLogger.c and re-build.
 

@@ -159,71 +159,6 @@ void cJSONLoggerDestroy()
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 }
 
-static void cJSONLoggerRotateLogs()
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-
-    struct tm* tmInfo = localtime(&ts.tv_sec);
-
-    char timeStr[MAX_TIME_STR_LEN];
-    snprintf(timeStr, sizeof(timeStr), "%d_%d_%d_%ld",
-        tmInfo->tm_hour,
-        tmInfo->tm_min,
-        tmInfo->tm_sec,
-        ts.tv_nsec);
-
-    pthread_mutex_lock(&s_g_cLoggerMutex);
-    s_g_logCount = 0;
-
-    if (s_g_rotatedFilesQueue == NULL) {
-        s_g_rotatedFilesQueue = (Queue_s*)malloc(sizeof(Queue_s));
-
-        CJSON_LOGGER_ASSERT_NEQ(s_g_rotatedFilesQueue, NULL);
-
-        memset(s_g_rotatedFilesQueue, 0, sizeof(*s_g_rotatedFilesQueue));
-    }
-
-    char* filePath = s_g_filePath;
-    unsigned int rotatedFileLen = strlen(filePath) + strlen(timeStr) + 2;
-
-    s_g_filePath = (char*)malloc(rotatedFileLen);
-
-    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
-
-    snprintf(s_g_filePath, rotatedFileLen, "%s_%s", timeStr, filePath);
-
-    if (s_g_rotatedFilesQueue->currentSize < MAX_LOG_ROTATION_FILES) {
-        s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->tail] = strdup(s_g_filePath);
-        s_g_rotatedFilesQueue->tail = (s_g_rotatedFilesQueue->tail + 1) % MAX_LOG_ROTATION_FILES;
-        s_g_rotatedFilesQueue->currentSize++;
-    }
-
-    else {
-        remove(s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->head]);
-        free(s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->head]);
-        s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->head] = NULL;
-        s_g_rotatedFilesQueue->head = (s_g_rotatedFilesQueue->head + 1) % MAX_LOG_ROTATION_FILES;
-        s_g_rotatedFilesQueue->currentSize--;
-    }
-    pthread_mutex_unlock(&s_g_cLoggerMutex);
-
-    cJSONLoggerDump();
-
-    pthread_mutex_lock(&s_g_cLoggerMutex);
-    free(s_g_filePath);
-    s_g_filePath = filePath;
-    pthread_mutex_unlock(&s_g_cLoggerMutex);
-
-    pthread_mutex_lock(&s_g_rootNodeMutex);
-    if (s_g_rootNode != NULL) {
-        cJSON_Delete(s_g_rootNode);
-    }
-
-    s_g_rootNode = cJSON_CreateObject();
-    pthread_mutex_unlock(&s_g_rootNodeMutex);
-}
-
 static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const char* logMsg)
 {
     struct timespec ts;
@@ -284,7 +219,7 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
     pthread_mutex_lock(&s_g_cLoggerMutex);
     if (++s_g_logCount > MAX_LOG_COUNT) {
         pthread_mutex_unlock(&s_g_cLoggerMutex);
-        cJSONLoggerRotateLogs();
+        cJSONLoggerRotate();
     }
 
     else {
@@ -375,6 +310,71 @@ void cJSONLoggerDump()
 
     fclose(file);
     free(string);
+}
+
+void cJSONLoggerRotate()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    struct tm* tmInfo = localtime(&ts.tv_sec);
+
+    char timeStr[MAX_TIME_STR_LEN];
+    snprintf(timeStr, sizeof(timeStr), "%d_%d_%d_%ld",
+        tmInfo->tm_hour,
+        tmInfo->tm_min,
+        tmInfo->tm_sec,
+        ts.tv_nsec);
+
+    pthread_mutex_lock(&s_g_cLoggerMutex);
+    s_g_logCount = 0;
+
+    if (s_g_rotatedFilesQueue == NULL) {
+        s_g_rotatedFilesQueue = (Queue_s*)malloc(sizeof(Queue_s));
+
+        CJSON_LOGGER_ASSERT_NEQ(s_g_rotatedFilesQueue, NULL);
+
+        memset(s_g_rotatedFilesQueue, 0, sizeof(*s_g_rotatedFilesQueue));
+    }
+
+    char* filePath = s_g_filePath;
+    unsigned int rotatedFileLen = strlen(filePath) + strlen(timeStr) + 2;
+
+    s_g_filePath = (char*)malloc(rotatedFileLen);
+
+    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
+
+    snprintf(s_g_filePath, rotatedFileLen, "%s_%s", timeStr, filePath);
+
+    if (s_g_rotatedFilesQueue->currentSize < MAX_LOG_ROTATION_FILES) {
+        s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->tail] = strdup(s_g_filePath);
+        s_g_rotatedFilesQueue->tail = (s_g_rotatedFilesQueue->tail + 1) % MAX_LOG_ROTATION_FILES;
+        s_g_rotatedFilesQueue->currentSize++;
+    }
+
+    else {
+        remove(s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->head]);
+        free(s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->head]);
+        s_g_rotatedFilesQueue->rotatedFiles[s_g_rotatedFilesQueue->head] = NULL;
+        s_g_rotatedFilesQueue->head = (s_g_rotatedFilesQueue->head + 1) % MAX_LOG_ROTATION_FILES;
+        s_g_rotatedFilesQueue->currentSize--;
+    }
+    pthread_mutex_unlock(&s_g_cLoggerMutex);
+
+    cJSONLoggerDump();
+
+    pthread_mutex_lock(&s_g_cLoggerMutex);
+    free(s_g_filePath);
+    s_g_filePath = filePath;
+    pthread_mutex_unlock(&s_g_cLoggerMutex);
+
+    pthread_mutex_lock(&s_g_rootNodeMutex);
+    if (s_g_rootNode != NULL) {
+        cJSON_Delete(s_g_rootNode);
+    }
+
+    s_g_rootNode = cJSON_CreateObject();
+    pthread_mutex_unlock(&s_g_rootNodeMutex);
 }
 
 void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel)

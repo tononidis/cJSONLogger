@@ -57,10 +57,16 @@ void cJSONLoggerDestroy();
 void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...);
 
 /**
- * @brief Dump the contents of the root cJSON struct into a file.
+ * @brief Dump the contents of the cJSONLogger into a file.
  *
  */
 void cJSONLoggerDump();
+
+/**
+ * @brief Dump the contents of the cJSONLogger into a file and rotate.
+ *
+ */
+void cJSONLoggerRotate();
 
 /**
  * @brief Sets the log level for the cJSON logger.
