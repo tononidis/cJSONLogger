@@ -85,7 +85,100 @@ static int test_cJSONLogger_log_without_init_with_enabled_severity(void)
 }
 
 /**
- * @brief Test the logging behavior with one object.
+ * @brief Test the logging behavior with no node object.
+ * *
+ * @return int, PASSED if the test passes, FAILED otherwise, values defined in enum TestStatus.
+ */
+static int test_cJSONLogger_log_no_node(void)
+{
+    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    CJSON_LOG_CRITICAL(NULL, "bar");
+    cJSONLoggerDump();
+
+    char* logData = readFile(LOG_FILE);
+    if (logData == NULL) {
+        return FAILED;
+    }
+
+    cJSON* jsonLogsDoc = cJSON_Parse(logData);
+    free(logData);
+
+    if (jsonLogsDoc == NULL) {
+        return FAILED;
+    }
+
+    int ret = PASSED;
+    cJSON* logsArray = cJSON_GetObjectItem(jsonLogsDoc, "logs");
+    if (logsArray == NULL || !cJSON_IsArray(logsArray)) {
+        ret = FAILED;
+    }
+
+    cJSON* logItem = cJSON_GetArrayItem(logsArray, 0);
+    if (logItem == NULL || !cJSON_IsObject(logItem)) {
+        ret = FAILED;
+    }
+
+    cJSON* logLevelEntry = cJSON_GetObjectItem(logItem, "LogLevel");
+    if (logLevelEntry == NULL || !cJSON_IsString(logLevelEntry)) {
+        ret = FAILED;
+    }
+
+    if (strncmp(logLevelEntry->valuestring, "CRITICAL", strlen("CRITICAL")) != 0) {
+        ret = FAILED;
+    }
+
+    cJSON* logEntry = cJSON_GetObjectItem(logItem, "log");
+    if (logEntry == NULL || !cJSON_IsString(logEntry)) {
+        ret = FAILED;
+    }
+
+    if (strncmp(logEntry->valuestring, "bar", strlen("bar")) != 0) {
+        ret = FAILED;
+    }
+
+    cJSON* timeEntry = cJSON_GetObjectItem(logItem, "Time");
+    if (timeEntry == NULL || !cJSON_IsString(timeEntry)) {
+        ret = FAILED;
+    }
+
+    if (strlen(logEntry->valuestring) <= 0) {
+        ret = FAILED;
+    }
+
+    cJSON* fileNameEntry = cJSON_GetObjectItem(logItem, "FileName");
+    if (fileNameEntry == NULL || !cJSON_IsString(fileNameEntry)) {
+        ret = FAILED;
+    }
+
+    if (strncmp(fileNameEntry->valuestring, __FILENAME__, strlen(__FILENAME__)) != 0) {
+        ret = FAILED;
+    }
+
+    cJSON* funcNameEntry = cJSON_GetObjectItem(logItem, "FuncName");
+    if (funcNameEntry == NULL || !cJSON_IsString(funcNameEntry)) {
+        ret = FAILED;
+    }
+
+    if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
+        ret = FAILED;
+    }
+
+    cJSON* fileLineEntry = cJSON_GetObjectItem(logItem, "FileLine");
+    if (fileLineEntry == NULL || !cJSON_IsNumber(fileLineEntry)) {
+        ret = FAILED;
+    }
+
+    if (fileLineEntry->valueint <= 0) {
+        ret = FAILED;
+    }
+
+    cJSON_Delete(jsonLogsDoc);
+    jsonLogsDoc = NULL;
+
+    return ret;
+}
+/**
+ * @brief Test the logging behavior with one node object.
  * *
  * @return int, PASSED if the test passes, FAILED otherwise, values defined in enum TestStatus.
  */
@@ -384,6 +477,7 @@ int main(void)
     initTestSuite();
 
     RUN_TEST(PASSED, test_cJSONLogger_log_without_init_with_disabled_severity);
+    RUN_TEST(PASSED, test_cJSONLogger_log_no_node);
     RUN_TEST(PASSED, test_cJSONLogger_log_one_node);
     RUN_TEST(PASSED, test_cJSONLogger_log_three_nodes);
     RUN_TEST(PASSED, test_cJSONLogger_severity_not_reached);
