@@ -247,7 +247,7 @@ static int test_cJSONLogger_log_three_nodes(void)
         ret = FAILED;
     }
 
-    if (strncmp(logLevelEntry->valuestring, "FAILED", strlen("FAILED")) != 0) {
+    if (strncmp(logLevelEntry->valuestring, "ERROR", strlen("ERROR")) != 0) {
         ret = FAILED;
     }
 

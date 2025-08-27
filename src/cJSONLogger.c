@@ -79,6 +79,7 @@
     do {                                        \
         assert(expr != expected);               \
     } while (0);
+
 #endif
 
 /**
@@ -405,6 +406,8 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
     }
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
+    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
+
     va_list args;
     va_start(args, fmt);
     char logMsg[MAX_LOG_MSG_LEN];
@@ -415,8 +418,6 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
         cJSONLoggerPushLog(NULL, logLevel, logMsg);
         return;
     }
-
-    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
 
     const char* nodeName = jsonPath[0];
 
