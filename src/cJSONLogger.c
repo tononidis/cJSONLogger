@@ -1,8 +1,10 @@
 /**
  * @file cJSONLogger.c
+ *
  * @brief This file contains the implementation for the cJSON logger library.
  *
  * @author Stefanos Tononidis
+ *
  * @date 2025-08-26
  */
 
@@ -17,24 +19,83 @@
 #include <stdlib.h>
 #include <time.h>
 
+/**
+ * @def MAX_TIME_STR_LEN
+ *
+ * @brief The maximum length of a string representation of time.
+ */
 #define MAX_TIME_STR_LEN 128
+
+/**
+ * @def MAX_LOG_MSG_LEN
+ *
+ * @brief The maximum length of a log message.
+ */
 #define MAX_LOG_MSG_LEN 256
+
+/**
+ * @def MAX_LOG_COUNT
+ *
+ * @brief The maximum number of log messages to keep in memory before rotating logs.
+ */
 #define MAX_LOG_COUNT 500
+
+/**
+ * @def MAX_LOG_ROTATION_FILES
+ *
+ * @brief The maximum number of log rotation files to keep.
+ */
 #define MAX_LOG_ROTATION_FILES 5
 
+/**
+ * @def CJSONLOGGER_DEBUG
+ *
+ * @brief When building for debugging.
+ */
 #ifdef CJSONLOGGER_DEBUG
+
+/**
+ * @def CJSON_LOGGER_ASSERT_EQ
+ *
+ * @param expr The expression to evaluate.
+ * @param expected The expected value.
+ *
+ * @brief Does an assertion when the expression is equal to the expected value.
+ */
 #define CJSON_LOGGER_ASSERT_EQ(expr, expected) \
     do {                                       \
         assert(expr == expected);              \
     } while (0);
 
+/**
+ * @def CJSON_LOGGER_ASSERT_NEQ
+ *
+ * @param expr The expression to evaluate.
+ * @param expected The expected value.
+ *
+ * @brief Does an assertion when the expression is not equal to the expected value.
+ */
 #define CJSON_LOGGER_ASSERT_NEQ(expr, expected) \
     do {                                        \
         assert(expr != expected);               \
     } while (0);
 #endif
 
+/**
+ * @def CJSONLOGGER_RELEASE
+ *
+ * @brief When building for a release.
+ */
 #ifdef CJSONLOGGER_RELEASE
+
+/**
+ * @def CJSON_LOGGER_ASSERT_EQ
+ *
+ * @param expr The expression to evaluate.
+ * @param expected The expected value.
+ *
+ * @brief Prints an error message if the expression is not equal to the expected value.
+ */
 #define CJSON_LOGGER_ASSERT_EQ(expr, expected)                                                       \
     do {                                                                                             \
         if (expr != expected) {                                                                      \
@@ -43,6 +104,14 @@
         }                                                                                            \
     } while (0);
 
+/**
+ * @def CJSON_LOGGER_ASSERT_NEQ
+ *
+ * @param expr The expression to evaluate.
+ * @param expected The expected value.
+ *
+ * @brief Prints an error message if the expression is equal to the expected value.
+ */
 #define CJSON_LOGGER_ASSERT_NEQ(expr, expected)                                                      \
     do {                                                                                             \
         if (expr == expected) {                                                                      \
@@ -53,36 +122,49 @@
 
 #endif
 
+/**
+ * @def CJSONLOGGER_DIST
+ *
+ * @brief When building for a distribution.
+ */
 #ifdef CJSONLOGGER_DIST
-#define CJSON_LOGGER_ASSERT_EQ(expr, expected)                                                       \
-    do {                                                                                             \
-        if (expr != expected) {                                                                      \
-            fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
-            return;                                                                                  \
-        }                                                                                            \
+
+/**
+ * @def CJSON_LOGGER_ASSERT_EQ
+ *
+ * @param expr The expression to evaluate.
+ * @param expected The expected value.
+ *
+ * @brief Does nothing.
+ */
+#define CJSON_LOGGER_ASSERT_EQ(expr, expected) \
+    do {                                       \
     } while (0);
 
-#define CJSON_LOGGER_ASSERT_NEQ(expr, expected)                                                      \
-    do {                                                                                             \
-        if (expr == expected) {                                                                      \
-            fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
-            return;                                                                                  \
-        }                                                                                            \
+/**
+ * @def CJSON_LOGGER_ASSERT_NEQ
+ *
+ * @param expr The expression to evaluate.
+ * @param expected The expected value.
+ *
+ * @brief Does nothing.
+ */
+#define CJSON_LOGGER_ASSERT_NEQ(expr, expected) \
+    do {                                        \
     } while (0);
 
 #endif
 
-static cJSON* s_g_rootNode = NULL;
-static pthread_mutex_t s_g_rootNodeMutex = PTHREAD_MUTEX_INITIALIZER;
-
-static pthread_mutex_t s_g_cLoggerMutex = PTHREAD_MUTEX_INITIALIZER;
-
-static CJSON_LOG_LEVEL_E s_g_logLevel = __CJSON_LOG_LEVEL_START;
-
-static char* s_g_filePath = NULL;
-
-static unsigned int s_g_logCount = 0;
-
+/**
+ * @struct Queue
+ *
+ * @brief Queue structure for managing log rotation files.
+ *
+ * @var rotatedFiles Array of rotated log file paths.
+ * @var head Index of the head element.
+ * @var tail Index of the tail element.
+ * @var currentSize Current number of elements in the queue.
+ */
 typedef struct Queue {
     char* rotatedFiles[MAX_LOG_ROTATION_FILES];
     int head;
@@ -90,9 +172,49 @@ typedef struct Queue {
     int currentSize;
 } Queue_s;
 
+/**
+ * @brief Queue for managing rotated log files.
+ */
 static Queue_s* s_g_rotatedFilesQueue = NULL;
 
-static inline char* cJSONLoggerGetLogLevelStr(CJSON_LOG_LEVEL_E logLevel)
+/**
+ * @brief Root JSON node for the logger.
+ */
+static cJSON* s_g_rootNode = NULL;
+
+/**
+ * @brief File path where logs will be stored.
+ */
+static char* s_g_filePath = NULL;
+
+/**
+ * @brief The current log level.
+ */
+static CJSON_LOG_LEVEL_E s_g_logLevel = __CJSON_LOG_LEVEL_START;
+
+/**
+ * @brief Counter for how many logs exist in the logger.
+ */
+static unsigned int s_g_logCount = 0;
+
+/**
+ * @brief Mutex for accessing the root JSON node.
+ */
+static pthread_mutex_t s_g_rootNodeMutex = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * @brief Mutex for accessing various global variables.
+ */
+static pthread_mutex_t s_g_cLoggerMutex = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * @brief Get the string representation of the log level.
+ *
+ * @param logLevel The log level to convert.
+ *
+ * @return The string representation of the log level.
+ */
+static inline const char* cJSONLoggerGetLogLevelStr(CJSON_LOG_LEVEL_E logLevel)
 {
     switch (logLevel) {
     case CJSON_LOG_LEVEL_CRITICAL:
@@ -110,55 +232,13 @@ static inline char* cJSONLoggerGetLogLevelStr(CJSON_LOG_LEVEL_E logLevel)
     }
 }
 
-void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
-{
-    pthread_mutex_lock(&s_g_rootNodeMutex);
-    if (s_g_rootNode == NULL) {
-        s_g_rootNode = cJSON_CreateObject();
-    }
-
-    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
-
-    pthread_mutex_unlock(&s_g_rootNodeMutex);
-
-    cJSONLoggerSetLogLevel(logLevel);
-
-    pthread_mutex_lock(&s_g_cLoggerMutex);
-    s_g_filePath = strdup(filePath);
-
-    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
-
-    pthread_mutex_unlock(&s_g_cLoggerMutex);
-
-    int ret = atexit(cJSONLoggerDestroy);
-
-    CJSON_LOGGER_ASSERT_EQ(ret, 0);
-}
-
-void cJSONLoggerDestroy()
-{
-    cJSONLoggerDump();
-
-    pthread_mutex_lock(&s_g_rootNodeMutex);
-    if (s_g_rootNode != NULL) {
-        cJSON_Delete(s_g_rootNode);
-    }
-    s_g_rootNode = NULL;
-    pthread_mutex_unlock(&s_g_rootNodeMutex);
-
-    pthread_mutex_lock(&s_g_cLoggerMutex);
-    if (s_g_filePath != NULL) {
-        free(s_g_filePath);
-    }
-    s_g_filePath = NULL;
-
-    if (s_g_rotatedFilesQueue != NULL) {
-        free(s_g_rotatedFilesQueue);
-    }
-    s_g_rotatedFilesQueue = NULL;
-    pthread_mutex_unlock(&s_g_cLoggerMutex);
-}
-
+/**
+ * @brief Push a log message to the specified JSON node.
+ *
+ * @param node The JSON node to push the log message to.
+ * @param logLevel The log level of the log message.
+ * @param logMsg The log message to push.
+ */
 static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const char* logMsg)
 {
     struct timespec ts;
@@ -233,6 +313,15 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
     free(logMsgDup);
 }
 
+/**
+ * @brief Log a message to a specific JSON node and move the the next sub node recursively.
+ *
+ * @param jsonPath The path to the JSON node.
+ * @param size The size of the JSON path.
+ * @param node The JSON node to log the message to.
+ * @param logLevel The log level of the message.
+ * @param logMsg The log message.
+ */
 static void cJSONLoggerLogRecur(char* jsonPath[], unsigned int size, cJSON* node, CJSON_LOG_LEVEL_E logLevel, const char* logMsg)
 {
     const char* nodeName = jsonPath[0];
@@ -252,6 +341,55 @@ static void cJSONLoggerLogRecur(char* jsonPath[], unsigned int size, cJSON* node
     else {
         cJSONLoggerLogRecur(&jsonPath[1], size - 1, subNode, logLevel, logMsg);
     }
+}
+
+void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
+{
+    pthread_mutex_lock(&s_g_rootNodeMutex);
+    if (s_g_rootNode == NULL) {
+        s_g_rootNode = cJSON_CreateObject();
+    }
+
+    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL);
+
+    pthread_mutex_unlock(&s_g_rootNodeMutex);
+
+    cJSONLoggerSetLogLevel(logLevel);
+
+    pthread_mutex_lock(&s_g_cLoggerMutex);
+    s_g_filePath = strdup(filePath);
+
+    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
+
+    pthread_mutex_unlock(&s_g_cLoggerMutex);
+
+    int ret = atexit(cJSONLoggerDestroy);
+
+    CJSON_LOGGER_ASSERT_EQ(ret, 0);
+}
+
+void cJSONLoggerDestroy()
+{
+    cJSONLoggerDump();
+
+    pthread_mutex_lock(&s_g_rootNodeMutex);
+    if (s_g_rootNode != NULL) {
+        cJSON_Delete(s_g_rootNode);
+    }
+    s_g_rootNode = NULL;
+    pthread_mutex_unlock(&s_g_rootNodeMutex);
+
+    pthread_mutex_lock(&s_g_cLoggerMutex);
+    if (s_g_filePath != NULL) {
+        free(s_g_filePath);
+    }
+    s_g_filePath = NULL;
+
+    if (s_g_rotatedFilesQueue != NULL) {
+        free(s_g_rotatedFilesQueue);
+    }
+    s_g_rotatedFilesQueue = NULL;
+    pthread_mutex_unlock(&s_g_cLoggerMutex);
 }
 
 void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)

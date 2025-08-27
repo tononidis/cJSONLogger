@@ -1,13 +1,20 @@
 /**
  * @file example.c
+ *
  * @brief This file contains an example usage of the cJSON logger library.
  *
  * @author Stefanos Tononidis
+ *
  * @date 2025-08-26
  */
 
 #include <cJSONLogger.h>
 
+/**
+ * @brief Main entry point for the example application.
+ *
+ * @return int always 0.
+ */
 int main(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json");
