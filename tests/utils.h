@@ -138,14 +138,29 @@ static void initTestSuite(void)
     s_g_testStatistics = cJSON_CreateObject();
     assert(s_g_testStatistics != NULL);
 
+/**
+ * @def CJSONLOGGER_TEST_DEBUG
+ *
+ * @brief When testing a debug build.
+ */
 #ifdef CJSONLOGGER_TEST_DEBUG
     cJSON_AddItemToObject(s_g_testStatistics, "TestMode", cJSON_CreateString("Debug"));
 #endif
 
+/**
+ * @def CJSONLOGGER_TEST_DEBUG
+ *
+ * @brief When testing a release build.
+ */
 #ifdef CJSONLOGGER_TEST_RELEASE
     cJSON_AddItemToObject(s_g_testStatistics, "TestMode", cJSON_CreateString("Release"));
 #endif
 
+/**
+ * @def CJSONLOGGER_TEST_DEBUG
+ *
+ * @brief When testing a distribution build.
+ */
 #ifdef CJSONLOGGER_TEST_DIST
     cJSON_AddItemToObject(s_g_testStatistics, "TestMode", cJSON_CreateString("Dist"));
 #endif
