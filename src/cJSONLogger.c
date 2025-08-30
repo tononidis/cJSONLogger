@@ -390,6 +390,10 @@ void cJSONLoggerDestroy()
         free(s_g_rotatedFilesQueue);
     }
     s_g_rotatedFilesQueue = NULL;
+
+    s_g_logCount = 0;
+
+    s_g_logLevel = __CJSON_LOG_LEVEL_START;
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 }
 
