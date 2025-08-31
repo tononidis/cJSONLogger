@@ -8,79 +8,12 @@
  * @date 2025-08-26
  */
 
-#include "utils.h"
-
 #include <cJSONLogger.h>
 
 #include <sys/wait.h>
 #include <unistd.h>
 
-/**
- * @def SIGNAL_BASE
- *
- * @brief Forked children on unix when terminated by a signal return SIGNAL_BASE + signal number.
- */
-#define SIGNAL_BASE 128
-
-/**
- * @brief Free a string and a cJSON object.
- *
- * @param charPtr The string to free.
- * @param cJSONPtr The cJSON object to delete.
- *
- * @return int, always FAILED.
- */
-static int failAndRelease(char* charPtr, cJSON* cJSONPtr)
-{
-    if (charPtr != NULL) {
-        free(charPtr);
-        charPtr = NULL;
-    }
-
-    if (cJSONPtr != NULL) {
-        cJSON_Delete(cJSONPtr);
-        cJSONPtr = NULL;
-    }
-
-    return FAILED;
-}
-
-/**
- * @brief Read the contents of a file into a string.
- *
- * @param fileName The name of the file to read.
- *
- * @warning returned string must be freed when no longer needed.
- *
- * @return char* A pointer to the contents of the file, or NULL on failure.
- */
-static char* readFile(const char* fileName)
-{
-    FILE* file = fopen(fileName, "r");
-    if (file == NULL) {
-        return NULL;
-    }
-
-    fseek(file, 0, SEEK_END);
-    size_t logSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    char* logData = malloc(logSize + 1);
-    if (logData != NULL) {
-        if (fread(logData, sizeof(char), logSize, file) != logSize) {
-            free(logData);
-            logData = NULL;
-            fclose(file);
-            return NULL;
-        }
-        logData[logSize] = '\0';
-    } else {
-        return NULL;
-    }
-
-    fclose(file);
-    return logData;
-}
+#include "test.h"
 
 /**
  * @brief Test the logging behavior when the severity level is not reached but the cJSONLogger is not initialized.

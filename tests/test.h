@@ -42,6 +42,13 @@
 #define MAX_TEST_NAME_LEN 128 + 1
 
 /**
+ * @def SIGNAL_BASE
+ *
+ * @brief Forked children on unix when terminated by a signal return SIGNAL_BASE + signal number.
+ */
+#define SIGNAL_BASE 128
+
+/**
  * @enum TestStatus
  *
  * @brief Enumeration used to evaluate a test status.
@@ -76,13 +83,83 @@ static cJSON* s_g_testStatistics = NULL;
 static pid_t s_g_pid = -1;
 
 /**
+ * @brief Free forked resources by the child process.
+ */
+void freeChildResources(void)
+{
+    if (s_g_testStatistics != NULL) {
+        cJSON_Delete(s_g_testStatistics);
+        s_g_testStatistics = NULL;
+    }
+}
+
+/**
+ * @brief Free a string and a cJSON object.
+ *
+ * @param charPtr The string to free.
+ * @param cJSONPtr The cJSON object to delete.
+ *
+ * @return int, always FAILED.
+ */
+static int failAndRelease(char* charPtr, cJSON* cJSONPtr)
+{
+    if (charPtr != NULL) {
+        free(charPtr);
+        charPtr = NULL;
+    }
+
+    if (cJSONPtr != NULL) {
+        cJSON_Delete(cJSONPtr);
+        cJSONPtr = NULL;
+    }
+
+    return FAILED;
+}
+
+/**
+ * @brief Read the contents of a file into a string.
+ *
+ * @param fileName The name of the file to read.
+ *
+ * @warning returned string must be freed when no longer needed.
+ *
+ * @return char* A pointer to the contents of the file, or NULL on failure.
+ */
+static char* readFile(const char* fileName)
+{
+    FILE* file = fopen(fileName, "r");
+    if (file == NULL) {
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t logSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    char* logData = malloc(logSize + 1);
+    if (logData != NULL) {
+        if (fread(logData, sizeof(char), logSize, file) != logSize) {
+            free(logData);
+            logData = NULL;
+            fclose(file);
+            return NULL;
+        }
+        logData[logSize] = '\0';
+    } else {
+        return NULL;
+    }
+
+    fclose(file);
+    return logData;
+}
+
+/**
  * @brief Destroys the test suite, cleans up resources and generates the test report.
  *
  * @note This function is called automatically at program exit to ensure all resources are released and the test report is generated.
  */
 static void destroyTestSuite(void)
 {
-    // Child seems to waste a few resources.
     if (s_g_pid == 0) {
         if (s_g_testStatistics != NULL) {
             cJSON_Delete(s_g_testStatistics);
@@ -210,26 +287,33 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
  * @param func The test function to run.
  * @param ... Additional arguments to pass to the test function.
  */
-#define RUN_TEST(expectedResult, func, ...)                                                                               \
-    do {                                                                                                                  \
-        TestInfo_s testInfo;                                                                                              \
-        int childExitStatus;                                                                                              \
-        snprintf(testInfo.name, MAX_TEST_NAME_LEN, "%s", FUNC_NAME(func));                                                \
-        printf("Running test [%s] ...\n", testInfo.name);                                                                 \
-        s_g_pid = fork();                                                                                                 \
-        if (s_g_pid == 0) {                                                                                               \
-            return func(__VA_ARGS__);                                                                                     \
-        } else {                                                                                                          \
-            wait(&childExitStatus);                                                                                       \
-        }                                                                                                                 \
-        if (childExitStatus == expectedResult) {                                                                          \
-            testInfo.status = PASSED;                                                                                     \
-            printf("Test [%s] passed\n", testInfo.name);                                                                  \
-        } else {                                                                                                          \
-            testInfo.status = FAILED;                                                                                     \
-            printf("Test [%s] failed, expected status [%d], got [%d]\n", testInfo.name, expectedResult, childExitStatus); \
-        }                                                                                                                 \
-        pushStats(&testInfo, expectedResult, childExitStatus);                                                            \
+#define RUN_TEST(expectedResult, func, ...)                                                                                   \
+    do {                                                                                                                      \
+        s_g_pid = fork();                                                                                                     \
+        if (s_g_pid == 0) {                                                                                                   \
+            freeChildResources();                                                                                             \
+            return func(__VA_ARGS__);                                                                                         \
+        }                                                                                                                     \
+                                                                                                                              \
+        else {                                                                                                                \
+            TestInfo_s testInfo;                                                                                              \
+            int childExitStatus;                                                                                              \
+            snprintf(testInfo.name, MAX_TEST_NAME_LEN, "%s", FUNC_NAME(func));                                                \
+            printf("Running test [%s] ...\n", testInfo.name);                                                                 \
+            wait(&childExitStatus);                                                                                           \
+                                                                                                                              \
+            if (childExitStatus == expectedResult) {                                                                          \
+                testInfo.status = PASSED;                                                                                     \
+                printf("Test [%s] passed\n", testInfo.name);                                                                  \
+            }                                                                                                                 \
+                                                                                                                              \
+            else {                                                                                                            \
+                testInfo.status = FAILED;                                                                                     \
+                printf("Test [%s] failed, expected status [%d], got [%d]\n", testInfo.name, expectedResult, childExitStatus); \
+            }                                                                                                                 \
+                                                                                                                              \
+            pushStats(&testInfo, expectedResult, childExitStatus);                                                            \
+        }                                                                                                                     \
     } while (0)
 
 #endif // UTILS_H
