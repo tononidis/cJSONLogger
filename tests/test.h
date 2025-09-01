@@ -12,10 +12,11 @@
 #include <cJSON.h>
 
 #include <assert.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <sys/inotify.h>
 /**
  * @def FUNC_NAME
  *
@@ -35,6 +36,13 @@
 #define LOG_FILE "log.json"
 
 /**
+ * @def MAX_STRING_LEN
+ *
+ * @brief The maximum length of a string to be allocated during any test.
+ */
+#define MAX_STRING_LEN 128 + 1
+
+/**
  * @def MAX_TEST_NAME_LEN
  *
  * @brief The maximum length of a test name (as a function).
@@ -47,6 +55,26 @@
  * @brief Forked children on unix when terminated by a signal return SIGNAL_BASE + signal number.
  */
 #define SIGNAL_BASE 128
+
+/**
+ * @def RELEASE_RESOURCE_AND_RETURN_FAIL
+ *
+ * @brief Release a resource and return failure.
+ *
+ * @param ptr The pointer to the resource to be freed.
+ *
+ * @param freeFunc The function to call to free the resource.
+ *
+ * @return int, always FAILED.
+ */
+#define RELEASE_RESOURCE_AND_RETURN_FAIL(ptr, freeFunc) \
+    do {                                                \
+        if (ptr != NULL) {                              \
+            freeFunc(ptr);                              \
+            ptr = NULL;                                 \
+        }                                               \
+        return FAILED;                                  \
+    } while (0)
 
 /**
  * @enum TestStatus
@@ -94,29 +122,6 @@ void freeChildResources(void)
 }
 
 /**
- * @brief Free a string and a cJSON object.
- *
- * @param charPtr The string to free.
- * @param cJSONPtr The cJSON object to delete.
- *
- * @return int, always FAILED.
- */
-static int failAndRelease(char* charPtr, cJSON* cJSONPtr)
-{
-    if (charPtr != NULL) {
-        free(charPtr);
-        charPtr = NULL;
-    }
-
-    if (cJSONPtr != NULL) {
-        cJSON_Delete(cJSONPtr);
-        cJSONPtr = NULL;
-    }
-
-    return FAILED;
-}
-
-/**
  * @brief Read the contents of a file into a string.
  *
  * @param fileName The name of the file to read.
@@ -141,11 +146,15 @@ static char* readFile(const char* fileName)
         if (fread(logData, sizeof(char), logSize, file) != logSize) {
             free(logData);
             logData = NULL;
+
             fclose(file);
             return NULL;
         }
         logData[logSize] = '\0';
-    } else {
+    }
+
+    else {
+        fclose(file);
         return NULL;
     }
 
@@ -279,6 +288,46 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
 }
 
 /**
+ * @brief File watcher handler (for spawned threads) to monitor file changes in the current directory.
+ *
+ * @param ctx Pointer to the context (unused).
+ *
+ * @return void* Pointer to the name of first file that was created.
+ */
+static void* fileWatcherHandler(void* ctx)
+{
+    int fd = inotify_init();
+    assert(fd >= 0);
+
+    int wd = inotify_add_watch(fd, "./", IN_CREATE);
+    assert(wd >= 0);
+
+    char buffer[1024];
+    int length = read(fd, buffer, sizeof(buffer));
+    assert(length >= 0);
+
+    struct inotify_event* event = (struct inotify_event*)&buffer;
+
+    assert(event->len > 0);
+    assert(event->mask & IN_CREATE);
+
+    int res = -1;
+
+    res = inotify_rm_watch(fd, wd);
+    assert(res == 0);
+
+    res = close(fd);
+    assert(res == 0);
+
+    char* result = (char*)malloc(strlen(event->name) + 1);
+    assert(result != NULL);
+
+    strncpy(result, event->name, strlen(event->name));
+    result[strlen(event->name)] = '\0';
+    return result;
+}
+
+/**
  * @def RUN_TEST
  *
  * @brief Fork and run a test case.
@@ -302,7 +351,7 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
             printf("Running test [%s] ...\n", testInfo.name);                                                                 \
             wait(&childExitStatus);                                                                                           \
                                                                                                                               \
-            if (childExitStatus == expectedResult) {                                                                          \
+            if (expectedResult == childExitStatus) {                                                                          \
                 testInfo.status = PASSED;                                                                                     \
                 printf("Test [%s] passed\n", testInfo.name);                                                                  \
             }                                                                                                                 \

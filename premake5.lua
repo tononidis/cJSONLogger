@@ -86,7 +86,8 @@ project "cJSONLoggerTests"
 
 	links
 	{
-		"cJSONLogger"
+		"cJSONLogger",
+		"pthread"
 	}
 
 	filter "configurations:Debug"

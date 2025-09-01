@@ -10,6 +10,7 @@
 
 #include <cJSONLogger.h>
 
+#include <fnmatch.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -65,66 +66,66 @@ static int test_cJSONLogger_log_no_node(void)
 
     cJSON* logsArray = cJSON_GetObjectItem(jsonLogsDoc, "logs");
     if (logsArray == NULL || !cJSON_IsArray(logsArray)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logItem = cJSON_GetArrayItem(logsArray, 0);
     if (logItem == NULL || !cJSON_IsObject(logItem)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logLevelEntry = cJSON_GetObjectItem(logItem, "LogLevel");
     if (logLevelEntry == NULL || !cJSON_IsString(logLevelEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(logLevelEntry->valuestring, "CRITICAL", strlen("CRITICAL")) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logEntry = cJSON_GetObjectItem(logItem, "log");
     if (logEntry == NULL || !cJSON_IsString(logEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(logEntry->valuestring, "bar", strlen("bar")) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* timeEntry = cJSON_GetObjectItem(logItem, "Time");
     if (timeEntry == NULL || !cJSON_IsString(timeEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strlen(logEntry->valuestring) <= 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fileNameEntry = cJSON_GetObjectItem(logItem, "FileName");
     if (fileNameEntry == NULL || !cJSON_IsString(fileNameEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(fileNameEntry->valuestring, __FILENAME__, strlen(__FILENAME__)) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* funcNameEntry = cJSON_GetObjectItem(logItem, "FuncName");
     if (funcNameEntry == NULL || !cJSON_IsString(funcNameEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fileLineEntry = cJSON_GetObjectItem(logItem, "FileLine");
     if (fileLineEntry == NULL || !cJSON_IsNumber(fileLineEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (fileLineEntry->valueint <= 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON_Delete(jsonLogsDoc);
@@ -157,76 +158,76 @@ static int test_cJSONLogger_log_one_node(void)
     }
 
     if (cJSON_HasObjectItem(jsonLogsDoc, "foo") == 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fooNode = cJSON_GetObjectItem(jsonLogsDoc, "foo");
     if (fooNode == NULL || cJSON_IsObject(fooNode) == 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logsArray = cJSON_GetObjectItem(fooNode, "logs");
     if (logsArray == NULL || !cJSON_IsArray(logsArray)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logItem = cJSON_GetArrayItem(logsArray, 0);
     if (logItem == NULL || !cJSON_IsObject(logItem)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logLevelEntry = cJSON_GetObjectItem(logItem, "LogLevel");
     if (logLevelEntry == NULL || !cJSON_IsString(logLevelEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(logLevelEntry->valuestring, "INFO", strlen("INFO")) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logEntry = cJSON_GetObjectItem(logItem, "log");
     if (logEntry == NULL || !cJSON_IsString(logEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(logEntry->valuestring, "bar", strlen("bar")) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* timeEntry = cJSON_GetObjectItem(logItem, "Time");
     if (timeEntry == NULL || !cJSON_IsString(timeEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strlen(logEntry->valuestring) <= 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fileNameEntry = cJSON_GetObjectItem(logItem, "FileName");
     if (fileNameEntry == NULL || !cJSON_IsString(fileNameEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(fileNameEntry->valuestring, __FILENAME__, strlen(__FILENAME__)) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* funcNameEntry = cJSON_GetObjectItem(logItem, "FuncName");
     if (funcNameEntry == NULL || !cJSON_IsString(funcNameEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fileLineEntry = cJSON_GetObjectItem(logItem, "FileLine");
     if (fileLineEntry == NULL || !cJSON_IsNumber(fileLineEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (fileLineEntry->valueint <= 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON_Delete(jsonLogsDoc);
@@ -260,86 +261,86 @@ static int test_cJSONLogger_log_three_nodes(void)
     }
 
     if (cJSON_HasObjectItem(jsonLogsDoc, "foo") == 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fooNode = cJSON_GetObjectItem(jsonLogsDoc, "foo");
     if (fooNode == NULL || cJSON_IsObject(fooNode) == 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* barNode = cJSON_GetObjectItem(fooNode, "bar");
     if (barNode == NULL || cJSON_IsObject(barNode) == 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* bazNode = cJSON_GetObjectItem(barNode, "baz");
     if (bazNode == NULL || cJSON_IsObject(bazNode) == 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logsArray = cJSON_GetObjectItem(bazNode, "logs");
     if (logsArray == NULL || !cJSON_IsArray(logsArray)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logItem = cJSON_GetArrayItem(logsArray, 0);
     if (logItem == NULL || !cJSON_IsObject(logItem)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logLevelEntry = cJSON_GetObjectItem(logItem, "LogLevel");
     if (logLevelEntry == NULL || !cJSON_IsString(logLevelEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(logLevelEntry->valuestring, "ERROR", strlen("ERROR")) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* logEntry = cJSON_GetObjectItem(logItem, "log");
     if (logEntry == NULL || !cJSON_IsString(logEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(logEntry->valuestring, "qux", strlen("qux")) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* timeEntry = cJSON_GetObjectItem(logItem, "Time");
     if (timeEntry == NULL || !cJSON_IsString(timeEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strlen(logEntry->valuestring) <= 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fileNameEntry = cJSON_GetObjectItem(logItem, "FileName");
     if (fileNameEntry == NULL || !cJSON_IsString(fileNameEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(fileNameEntry->valuestring, __FILENAME__, strlen(__FILENAME__)) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* funcNameEntry = cJSON_GetObjectItem(logItem, "FuncName");
     if (funcNameEntry == NULL || !cJSON_IsString(funcNameEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON* fileLineEntry = cJSON_GetObjectItem(logItem, "FileLine");
     if (fileLineEntry == NULL || !cJSON_IsNumber(fileLineEntry)) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     if (fileLineEntry->valueint <= 0) {
-        return failAndRelease(NULL, jsonLogsDoc);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
     cJSON_Delete(jsonLogsDoc);
@@ -480,7 +481,7 @@ static int test_cJSONLogger_dump(void)
     CJSON_LOG_INFO(jsonNode, "bar");
 
     if (cJSON_GetObjectItem(loggedJson, "foo") != NULL) {
-        return failAndRelease(NULL, loggedJson);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(loggedJson, cJSON_Delete);
     }
 
     cJSON_Delete(loggedJson);
@@ -501,8 +502,50 @@ static int test_cJSONLogger_dump(void)
     }
 
     if (cJSON_GetObjectItem(loggedJson, "foo") == NULL) {
-        return failAndRelease(NULL, loggedJson);
+        RELEASE_RESOURCE_AND_RETURN_FAIL(loggedJson, cJSON_Delete);
     }
+
+    cJSON_Delete(loggedJson);
+    loggedJson = NULL;
+
+    return PASSED;
+}
+
+/**
+ * @brief Test the cJSON logger file rotation functionality.
+ *
+ * @return int, PASSED if the test passes, FAILED otherwise, values defined in enum TestStatus.
+ */
+static int test_cJSONLogger_rotate(void)
+{
+    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+
+    CJSON_LOG_INFO(NULL, "bar");
+
+    int res = -1;
+
+    pthread_t pThread;
+    res = pthread_create(&pThread, NULL, fileWatcherHandler, NULL);
+    assert(res == 0);
+
+    cJSONLoggerRotate();
+
+    char* rotatedFileName = NULL;
+    res = pthread_join(pThread, (void**)&rotatedFileName);
+    assert(res == 0);
+
+    assert(rotatedFileName != NULL);
+
+    if (remove(rotatedFileName) != 0) {
+        return FAILED;
+    }
+
+    if (fnmatch("*_log.json", rotatedFileName, 0) != 0) {
+        return FAILED;
+    }
+
+    free(rotatedFileName);
+    rotatedFileName = NULL;
 
     return PASSED;
 }
@@ -528,6 +571,7 @@ int main(void)
     RUN_TEST(PASSED, test_cJSONLogger_severity_reached);
     RUN_TEST(PASSED, test_cJSONLogger_destroy);
     RUN_TEST(PASSED, test_cJSONLogger_dump);
+    RUN_TEST(PASSED, test_cJSONLogger_rotate);
 
 #ifdef CJSONLOGGER_TEST_DEBUG
 
