@@ -35,3 +35,16 @@ jobs:
           echo "Not all tests passed"
           exit 1
         fi
+
+    - name: Install Valgrind and parser
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind
+        pip install ValgrindCI
+
+    - name: Valgrind Report
+      run: |
+        valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report.xml ./bin/Release/cJSONLoggerTests/cJSONLoggerTests
+        echo "Valgrind Report Summary:"
+        valgrind-ci valgrind_report.xml --summary
+        valgrind-ci valgrind_report.xml --abort-on-errors
