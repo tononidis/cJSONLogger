@@ -387,6 +387,12 @@ void cJSONLoggerDestroy()
     s_g_filePath = NULL;
 
     if (s_g_rotatedFilesQueue != NULL) {
+        for (int i = 0; i < s_g_rotatedFilesQueue->currentSize; i++) {
+            if (s_g_rotatedFilesQueue->rotatedFiles[i] != NULL) {
+                free(s_g_rotatedFilesQueue->rotatedFiles[i]);
+                s_g_rotatedFilesQueue->rotatedFiles[i] = NULL;
+            }
+        }
         free(s_g_rotatedFilesQueue);
     }
     s_g_rotatedFilesQueue = NULL;

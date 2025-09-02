@@ -296,6 +296,8 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
  */
 static void* fileWatcherHandler(void* ctx)
 {
+    assert(ctx != NULL);
+
     int fd = inotify_init();
     assert(fd >= 0);
 
@@ -303,6 +305,9 @@ static void* fileWatcherHandler(void* ctx)
     assert(wd >= 0);
 
     char buffer[1024];
+
+    pthread_kill(*(pthread_t*)ctx, SIGUSR1);
+
     int length = read(fd, buffer, sizeof(buffer));
     assert(length >= 0);
 

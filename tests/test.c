@@ -11,6 +11,7 @@
 #include <cJSONLogger.h>
 
 #include <fnmatch.h>
+#include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -524,8 +525,22 @@ static int test_cJSONLogger_rotate(void)
 
     int res = -1;
 
+    pthread_t mainThread = pthread_self();
     pthread_t pThread;
-    res = pthread_create(&pThread, NULL, fileWatcherHandler, NULL);
+    res = pthread_create(&pThread, NULL, fileWatcherHandler, &mainThread);
+    assert(res == 0);
+
+    int sig = -1;
+    sigset_t sigSet;
+    res = sigemptyset(&sigSet);
+    assert(res == 0);
+    res = sigaddset(&sigSet, SIGUSR1);
+    assert(res == 0);
+
+    res = pthread_sigmask(SIG_BLOCK, &sigSet, NULL);
+    assert(res == 0);
+
+    res = sigwait(&sigSet, &sig);
     assert(res == 0);
 
     cJSONLoggerRotate();
