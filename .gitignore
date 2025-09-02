@@ -75,4 +75,4 @@ docs/html/
 docs/latex/
 
 #Valgrind
-valgrind_report.xml
+valgrind_report_*.xml

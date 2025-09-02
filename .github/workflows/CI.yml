@@ -44,7 +44,27 @@ jobs:
 
     - name: Valgrind Report
       run: |
-        valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report.xml ./bin/Release/cJSONLoggerTests/cJSONLoggerTests
-        echo "Valgrind Report Summary:"
-        valgrind-ci valgrind_report.xml --summary
-        valgrind-ci valgrind_report.xml --abort-on-errors
+        valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_%p.xml ./bin/Debug/cJSONLoggerTests/cJSONLoggerTests
+
+        found_error=0
+        for file in valgrind_report_*.xml; do
+            [ -e "$file" ] || continue
+
+            echo "Processing $file..."
+            
+            valgrind-ci "$file" --abort-on-error
+
+            status=$?
+
+            if [ $status -ne 0 ]; then
+                echo "Errors were found in $file"
+                cat "$file"
+                found_error=1
+            fi
+
+            rm "$file"
+        done
+
+        if [ $found_error -ne 0 ]; then
+            exit 1
+        fi
