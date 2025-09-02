@@ -1,7 +1,7 @@
 /**
  * @file multithread_tests.c
  * @brief Multithreaded tests for cJSONLogger (designed to be used with the helgrind tool).
- * 
+ *
  * @author Stefanos Tononidis
  * @date 2025-09-02
  */
@@ -10,6 +10,10 @@
 
 #include <assert.h>
 #include <pthread.h>
+#include <stdatomic.h>
+#include <stdio.h>
+#include <sys/inotify.h>
+#include <unistd.h>
 
 /**
  * @def RUN_TEST
@@ -40,6 +44,39 @@
  * @brief The log file path where the cJSONLogger test logs are stored.
  */
 #define LOG_FILE "log.json"
+
+static atomic_int s_g_threadFlag = 1;
+
+static void* fileWatcherHandler(void* ctx)
+{
+    int fd = inotify_init();
+    assert(fd >= 0);
+
+    int wd = inotify_add_watch(fd, "./", IN_CREATE);
+    assert(wd >= 0);
+
+    while (atomic_load(&s_g_threadFlag) != 0) {
+        char buffer[1024];
+        int length = read(fd, buffer, sizeof(buffer));
+        assert(length >= 0);
+        struct inotify_event* event = (struct inotify_event*)&buffer;
+
+        assert(event->len > 0);
+        assert(event->mask & IN_CREATE);
+
+        int res = remove(event->name);
+        assert(res == 0);
+    }
+
+    int res = -1;
+    res = inotify_rm_watch(fd, wd);
+    assert(res == 0);
+
+    res = close(fd);
+    assert(res == 0);
+
+    return NULL;
+}
 
 static void* initLoggerHandler(void* ctx)
 {
@@ -82,12 +119,21 @@ static void* destroyHandler(void* ctx)
  */
 int main(void)
 {
+    pthread_t fileWatcherThread;
+    pthread_create(&fileWatcherThread, NULL, fileWatcherHandler, NULL);
+
     RUN_TEST(initLoggerHandler, initLoggerHandler);
     RUN_TEST(logHandler, logHandler);
     RUN_TEST(dumpHandler, dumpHandler);
-    RUN_TEST(initLoggerHandler, initLoggerHandler);
+    RUN_TEST(rotateHandler, rotateHandler);
     RUN_TEST(destroyHandler, destroyHandler);
     RUN_TEST(initLoggerHandler, destroyHandler);
+
+    // Force a final log rotation
+    atomic_store(&s_g_threadFlag, 0);
+    initLoggerHandler(NULL);
+    rotateHandler(NULL);
+    pthread_join(fileWatcherThread, NULL);
 
     return 0;
 }

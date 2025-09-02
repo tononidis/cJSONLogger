@@ -1,9 +1,9 @@
 workspace "cJSONLogger"
 	configurations
 	{
-		"Debug",
-		"Release",
-		"Dist"
+		"debug",
+		"release",
+		"dist"
 	}
 
 	outputdir = "%{cfg.buildcfg}"
@@ -34,19 +34,19 @@ project "cJSONLogger"
 		"pthread"
 	}
 
-	filter "configurations:Debug"
+	filter "configurations:debug"
 		defines "CJSONLOGGER_DEBUG"
 		runtime "Debug"
 		symbols "on"
 		optimize "off"
 
-	filter "configurations:Release"
+	filter "configurations:release"
 		defines "CJSONLOGGER_RELEASE"
 		runtime "Release"
 		symbols "on"
 		optimize "on"
 
-	filter "configurations:Dist"
+	filter "configurations:dist"
 		defines "CJSONLOGGER_DIST"
 		runtime "Release"
 		symbols "off"
@@ -90,19 +90,19 @@ project "cJSONLoggerTests"
 		"pthread"
 	}
 
-	filter "configurations:Debug"
+	filter "configurations:debug"
 		defines "CJSONLOGGER_TEST_DEBUG"
 		runtime "Debug"
 		symbols "on"
 		optimize "off"
 
-	filter "configurations:Release"
+	filter "configurations:release"
 		defines "CJSONLOGGER_TEST_RELEASE"
 		runtime "Release"
 		symbols "on"
 		optimize "on"
 
-	filter "configurations:Dist"
+	filter "configurations:dist"
 		defines "CJSONLOGGER_TEST_DIST"
 		runtime "Release"
 		symbols "off"
@@ -128,19 +128,19 @@ project "cJSONLoggerMultiThreadTests"
 		"pthread"
 	}
 
-	filter "configurations:Debug"
+	filter "configurations:debug"
 		defines "CJSONLOGGER_MULTITHREAD_TEST_DEBUG"
 		runtime "Debug"
 		symbols "on"
 		optimize "off"
 
-	filter "configurations:Release"
+	filter "configurations:release"
 		defines "CJSONLOGGER_MULTITHREAD_TEST_RELEASE"
 		runtime "Release"
 		symbols "on"
 		optimize "on"
 
-	filter "configurations:Dist"
+	filter "configurations:dist"
 		defines "CJSONLOGGER_MULTITHREAD_TEST_DIST"
 		runtime "Release"
 		symbols "off"
