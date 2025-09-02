@@ -75,7 +75,7 @@ project "cJSONLoggerTests"
 
 	files
 	{
-		"tests/*.c"
+		"tests/test.c"
 	}
 
 	includedirs
@@ -104,6 +104,44 @@ project "cJSONLoggerTests"
 
 	filter "configurations:Dist"
 		defines "CJSONLOGGER_TEST_DIST"
+		runtime "Release"
+		symbols "off"
+		optimize "on"
+
+project "cJSONLoggerMultiThreadTests"
+	kind "ConsoleApp"
+
+	files
+	{
+		"tests/multithread_tests.c"
+	}
+
+	includedirs
+	{
+		"cJSON",
+		"include"
+	}
+
+	links
+	{
+		"cJSONLogger",
+		"pthread"
+	}
+
+	filter "configurations:Debug"
+		defines "CJSONLOGGER_MULTITHREAD_TEST_DEBUG"
+		runtime "Debug"
+		symbols "on"
+		optimize "off"
+
+	filter "configurations:Release"
+		defines "CJSONLOGGER_MULTITHREAD_TEST_RELEASE"
+		runtime "Release"
+		symbols "on"
+		optimize "on"
+
+	filter "configurations:Dist"
+		defines "CJSONLOGGER_MULTITHREAD_TEST_DIST"
 		runtime "Release"
 		symbols "off"
 		optimize "on"

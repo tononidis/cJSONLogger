@@ -245,16 +245,17 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
 
-    struct tm* tmInfo = localtime(&ts.tv_sec);
+    struct tm tmInfo;
+    localtime_r(&ts.tv_sec, &tmInfo);
 
     char timeStr[MAX_TIME_STR_LEN];
     snprintf(timeStr, sizeof(timeStr), "%d-%d-%d %d:%d:%d.%ld",
-        tmInfo->tm_year + 1900,
-        tmInfo->tm_mon + 1,
-        tmInfo->tm_mday,
-        tmInfo->tm_hour,
-        tmInfo->tm_min,
-        tmInfo->tm_sec,
+        tmInfo.tm_year + 1900,
+        tmInfo.tm_mon + 1,
+        tmInfo.tm_mday,
+        tmInfo.tm_hour,
+        tmInfo.tm_min,
+        tmInfo.tm_sec,
         ts.tv_nsec);
 
     char* logMsgDup = strdup(logMsg);
@@ -358,6 +359,10 @@ void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
     cJSONLoggerSetLogLevel(logLevel);
 
     pthread_mutex_lock(&s_g_cLoggerMutex);
+    if (s_g_filePath != NULL) {
+        free(s_g_filePath);
+    }
+
     s_g_filePath = strdup(filePath);
 
     CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
