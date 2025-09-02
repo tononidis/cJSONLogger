@@ -1,5 +1,5 @@
 # cJSONLogger
-This is a C logger, designed to output logs in a JSON format.
+This is a thread safe C logger, designed to output logs in a JSON format.
 
 ## Why log in JSON format?
 I can think one good reason.
@@ -63,6 +63,9 @@ However a JSON logger by its nature is designed for debugging and testing builds
 Automatic mechanisms to avoid a potential scenario of running out of memory exist and are detailed on the features tab.
 
 ## Features
+
+### Thread safe
+The cJSONLogger is safe to use when your application is multithreaded.
 
 ### Automatic file rotation
 When to many line of logs are written (MAX_LOG_COUNT = 500).

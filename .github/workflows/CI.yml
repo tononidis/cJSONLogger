@@ -43,7 +43,7 @@ jobs:
 
     - name: Valgrind Report
       run: |
-        valgrind --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_%p.xml ./bin/Release/cJSONLoggerTests/cJSONLoggerTests
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_%p.xml ./bin/Release/cJSONLoggerTests/cJSONLoggerTests
 
         found_error=0
         for file in valgrind_report_*.xml; do

@@ -1,13 +1,13 @@
 /**
- * @file utils.h
+ * @file test.h
  * @brief This file contains utility functions for testing the cJSON logger library.
  *
  * @author Stefanos Tononidis
  * @date 2025-08-26
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef TEST_H
+#define TEST_H
 
 #include <cJSON.h>
 
@@ -370,4 +370,4 @@ static void* fileWatcherHandler(void* ctx)
         }                                                                                                                     \
     } while (0)
 
-#endif // UTILS_H
+#endif // TEST_H
