@@ -45,8 +45,18 @@
  */
 #define LOG_FILE "log.json"
 
+/**
+ * @brief Global thread flag for controlling the file watcher thread.
+ */
 static atomic_int s_g_threadFlag = 1;
 
+/**
+ * @brief File watcher thread handler that is used to sanitize any created log files.
+ *
+ * @param ctx The context pointer (unused).
+ *
+ * @return always NULL
+ */
 static void* fileWatcherHandler(void* ctx)
 {
     int fd = inotify_init();
@@ -78,42 +88,73 @@ static void* fileWatcherHandler(void* ctx)
     return NULL;
 }
 
+/**
+ * @brief cJSONLogger initialization thread handler.
+ *
+ * @param ctx The context pointer (unused).
+ *
+ * @return always NULL
+ */
 static void* initLoggerHandler(void* ctx)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
     return NULL;
 }
 
+/**
+ * @brief cJSONLogger log thread handler.
+ *
+ * @param ctx The context pointer (unused).
+ *
+ * @return always NULL
+ */
 static void* logHandler(void* ctx)
 {
     CJSON_LOG_CRITICAL(NULL, "foo");
     return NULL;
 }
 
+/**
+ * @brief cJSONLogger dump thread handler.
+ *
+ * @param ctx The context pointer (unused).
+ *
+ * @return always NULL
+ */
 static void* dumpHandler(void* ctx)
 {
     cJSONLoggerDump();
     return NULL;
 }
 
+/**
+ * @brief cJSONLogger file rotation thread handler.
+ *
+ * @param ctx The context pointer (unused).
+ *
+ * @return always NULL
+ */
 static void* rotateHandler(void* ctx)
 {
     cJSONLoggerRotate();
     return NULL;
 }
 
+/**
+ * @brief cJSONLogger destruction thread handler.
+ *
+ * @param ctx The context pointer (unused).
+ *
+ * @return always NULL
+ */
 static void* destroyHandler(void* ctx)
 {
     cJSONLoggerDestroy();
     return NULL;
 }
 
-/*
- * @brief Entry point for cJSONLogger tests.
- *
- * @note Some tests run differently on different build configurations.
- *
- * @warning the initTestSuite() should always be called before any tests are run.
+/**
+ * @brief Entry point for cJSONLogger multithread tests (by using the helgrind tool).
  *
  * @return int, always 0.
  */
@@ -124,10 +165,13 @@ int main(void)
 
     RUN_TEST(initLoggerHandler, initLoggerHandler);
     RUN_TEST(logHandler, logHandler);
+    RUN_TEST(logHandler, dumpHandler);
+    RUN_TEST(logHandler, rotateHandler);
     RUN_TEST(dumpHandler, dumpHandler);
     RUN_TEST(rotateHandler, rotateHandler);
     RUN_TEST(destroyHandler, destroyHandler);
     RUN_TEST(initLoggerHandler, destroyHandler);
+    RUN_TEST(initLoggerHandler, logHandler);
 
     // Force a final log rotation
     atomic_store(&s_g_threadFlag, 0);

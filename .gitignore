@@ -76,3 +76,4 @@ docs/latex/
 
 #Valgrind
 valgrind_report_*.xml
+helgrind_report.xml

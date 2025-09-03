@@ -46,7 +46,8 @@ jobs:
 
     - name: Valgrind Report
       run: |
-        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_%p.xml ./bin/${{ matrix.configuration }}/cJSONLoggerTests/cJSONLoggerTests
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_MTT.xml ./bin/${{ matrix.configuration }}/cJSONLoggerMultiThreadTests/cJSONLoggerMultiThreadTests
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_T_%p.xml ./bin/${{ matrix.configuration }}/cJSONLoggerTests/cJSONLoggerTests
 
         found_error=0
         for file in valgrind_report_*.xml; do
@@ -68,5 +69,16 @@ jobs:
         done
 
         if [ $found_error -ne 0 ]; then
+            exit 1
+        fi
+
+    - name: Helgrind Report
+      run: |
+        valgrind --tool=helgrind --suppressions=helgrind.supp --xml=yes --xml-file=helgrind_report.xml ./bin/${{ matrix.configuration }}/cJSONLoggerMultiThreadTests/cJSONLoggerMultiThreadTests
+        valgrind-ci "helgrind_report.xml" --abort-on-error
+        status=$?
+        if [ $status -ne 0 ]; then
+            echo "Errors were found in helgrind_report.xml"
+            cat helgrind_report.xml
             exit 1
         fi
