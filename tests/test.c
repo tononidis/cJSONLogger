@@ -578,6 +578,7 @@ int main(void)
 {
     initTestSuite();
 
+    RUN_TEST(PASSED, test_cJSONLogger_log_without_init_with_enabled_severity);
     RUN_TEST(PASSED, test_cJSONLogger_log_without_init_with_disabled_severity);
     RUN_TEST(PASSED, test_cJSONLogger_log_no_node);
     RUN_TEST(PASSED, test_cJSONLogger_log_one_node);
@@ -587,17 +588,6 @@ int main(void)
     RUN_TEST(PASSED, test_cJSONLogger_destroy);
     RUN_TEST(PASSED, test_cJSONLogger_dump);
     RUN_TEST(PASSED, test_cJSONLogger_rotate);
-
-#ifdef CJSONLOGGER_TEST_DEBUG
-
-    // The bellow test expects an assert to fail only in debug builds, raising an abort() (SIGABRT)
-    RUN_TEST(SIGNAL_BASE + SIGABRT, test_cJSONLogger_log_without_init_with_enabled_severity);
-
-#else
-
-    RUN_TEST(PASSED, test_cJSONLogger_log_without_init_with_enabled_severity);
-
-#endif
 
     return 0;
 }

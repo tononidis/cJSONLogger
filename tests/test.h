@@ -50,13 +50,6 @@
 #define MAX_TEST_NAME_LEN 128 + 1
 
 /**
- * @def SIGNAL_BASE
- *
- * @brief Forked children on unix when terminated by a signal return SIGNAL_BASE + signal number.
- */
-#define SIGNAL_BASE 128
-
-/**
  * @def RELEASE_RESOURCE_AND_RETURN_FAIL
  *
  * @brief Release a resource and return failure.

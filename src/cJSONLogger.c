@@ -101,12 +101,12 @@
     do {                                                                                             \
         if (expr != expected) {                                                                      \
             fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
+            pthread_mutex_t* pMutex = (pthread_mutex_t*)mutex;                                       \
+            if (pMutex != NULL) {                                                                    \
+                pthread_mutex_unlock(pMutex);                                                        \
+            }                                                                                        \
+            return;                                                                                  \
         }                                                                                            \
-        pthread_mutex_t* pMutex = (pthread_mutex_t*)mutex;                                           \
-        if (pMutex != NULL) {                                                                        \
-            pthread_mutex_unlock(pMutex);                                                            \
-        }                                                                                            \
-        return;                                                                                      \
     } while (0);
 
 /**
@@ -121,12 +121,12 @@
     do {                                                                                             \
         if (expr == expected) {                                                                      \
             fprintf(stderr, "Assertion at %s:%s:%d failed\n", __FILENAME__, __FUNCTION__, __LINE__); \
+            pthread_mutex_t* pMutex = (pthread_mutex_t*)mutex;                                       \
+            if (pMutex != NULL) {                                                                    \
+                pthread_mutex_unlock(pMutex);                                                        \
+            }                                                                                        \
+            return;                                                                                  \
         }                                                                                            \
-        pthread_mutex_t* pMutex = (pthread_mutex_t*)mutex;                                           \
-        if (pMutex != NULL) {                                                                        \
-            pthread_mutex_unlock(pMutex);                                                            \
-        }                                                                                            \
-        return;                                                                                      \
     } while (0);
 
 #endif
@@ -414,6 +414,13 @@ void cJSONLoggerDestroy()
 
 void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
 {
+    pthread_mutex_lock(&s_g_rootNodeMutex);
+    if (s_g_rootNode == NULL) {
+        pthread_mutex_unlock(&s_g_rootNodeMutex);
+        return;
+    }
+
+    pthread_mutex_unlock(&s_g_rootNodeMutex);
     if (size < 0) {
         return;
     }
@@ -423,7 +430,6 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
         pthread_mutex_unlock(&s_g_cLoggerMutex);
         return;
     }
-    CJSON_LOGGER_ASSERT_NEQ(s_g_rootNode, NULL, &s_g_rootNodeMutex);
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
     va_list args;
