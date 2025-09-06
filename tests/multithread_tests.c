@@ -1,8 +1,10 @@
 /**
  * @file multithread_tests.c
+ *
  * @brief Multithreaded tests for cJSONLogger (designed to be used with the helgrind tool).
  *
  * @author Stefanos Tononidis
+ *
  * @date 2025-09-02
  */
 
