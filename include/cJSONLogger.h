@@ -62,11 +62,16 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
 
 /**
  * @brief Dump the contents of the cJSONLogger into a file.
+ *
+ * @warning This will replace the current content of the default log file. Prefer to use cJSONLoggerRotate() to rotate the log file instead.
+ *
  */
 void cJSONLoggerDump();
 
 /**
  * @brief Dump the contents of the cJSONLogger into a file and rotate.
+ *
+ * @note Logger rotates by default after MAX_LOG_COUNT (500) lines and creates number of files up to MAX_LOG_ROTATION_FILES (5), afterwards the older rotated file is deleted.
  */
 void cJSONLoggerRotate();
 

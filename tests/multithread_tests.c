@@ -12,8 +12,73 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/inotify.h>
 #include <unistd.h>
+
+/**
+ * @brief A simple dynamic array (vector) implementation for storing pointers to data.
+ */
+typedef struct Vector {
+    void** data;
+    size_t size;
+    size_t capacity;
+} Vector_s;
+
+/**
+ * @brief Initializes a vector with the specified capacity.
+ *
+ * @param capacity The initial capacity of the vector.
+ *
+ * @return A pointer to the initialized vector.
+ */
+Vector_s* vectorInit(size_t capacity)
+{
+    Vector_s* vector = malloc(sizeof(Vector_s));
+    assert(vector != NULL);
+    vector->data = malloc(capacity * sizeof(void*));
+    assert(vector->data != NULL);
+    vector->size = 0;
+    vector->capacity = capacity;
+    return vector;
+}
+
+/**
+ * @brief Destroys the vector and frees its resources.
+ *
+ * @param vector The vector to destroy.
+ */
+void vectorDestroy(Vector_s* vector)
+{
+    if (vector != NULL) {
+        if (vector->data != NULL) {
+            free(vector->data);
+            vector->data = NULL;
+        }
+        free(vector);
+        vector = NULL;
+    }
+}
+
+/**
+ * @brief Push an item (void pointer to address) to the end of the vector, resizing if necessary.
+ *
+ * @param vector The vector to push the item to.
+ *
+ * @param item The item to push.
+ */
+void vectorPushBack(Vector_s* vector, void* item)
+{
+    assert(vector != NULL);
+    if (vector->size >= vector->capacity) {
+        vector->capacity *= 2;
+        vector->data = realloc(vector->data, vector->capacity * sizeof(void*));
+        assert(vector->data != NULL);
+    }
+
+    vector->data[vector->size] = item;
+    vector->size++;
+}
 
 /**
  * @def RUN_TEST
@@ -65,6 +130,8 @@ static void* fileWatcherHandler(void* ctx)
     int wd = inotify_add_watch(fd, "./", IN_CREATE);
     assert(wd >= 0);
 
+    Vector_s* createdFiles_v = vectorInit(8);
+
     while (atomic_load(&s_g_threadFlag) != 0) {
         char buffer[1024];
         int length = read(fd, buffer, sizeof(buffer));
@@ -74,8 +141,7 @@ static void* fileWatcherHandler(void* ctx)
         assert(event->len > 0);
         assert(event->mask & IN_CREATE);
 
-        int res = remove(event->name);
-        assert(res == 0);
+        vectorPushBack(createdFiles_v, strdup(event->name));
     }
 
     int res = -1;
@@ -85,7 +151,7 @@ static void* fileWatcherHandler(void* ctx)
     res = close(fd);
     assert(res == 0);
 
-    return NULL;
+    return createdFiles_v;
 }
 
 /**
@@ -177,7 +243,18 @@ int main(void)
     atomic_store(&s_g_threadFlag, 0);
     initLoggerHandler(NULL);
     rotateHandler(NULL);
-    pthread_join(fileWatcherThread, NULL);
+
+    Vector_s* createdFiles_v = NULL;
+    pthread_join(fileWatcherThread, (void**)&createdFiles_v);
+
+    for (size_t i = 0; i < createdFiles_v->size; i++) {
+        int res = remove((char*)createdFiles_v->data[i]);
+        assert(res == 0);
+        free(createdFiles_v->data[i]);
+    }
+
+    vectorDestroy(createdFiles_v);
+    createdFiles_v = NULL;
 
     return 0;
 }
