@@ -79,9 +79,9 @@ If application need to rotate logs earlier it can be done with cJSONLoggerRotate
 If different config is needed the change the mentioned macros at src/cJSONLogger.c and re-build.
 
 ## Building
-The cJSONLogger can be used either as a header only lib by adding to your codebase the files at include/* and src/*
+The cJSONLogger can be used either as a header only lib by adding to your codebase the files at include/* and src/* as well as the dependecies needed from [cJSON](https://github.com/DaveGamble/cJSON) module.
 
-Or by building as a shared lib (or static by editing the premake5.lua) with the [premake](https://premake.github.io) tool and adding the include/* files to your codebase.
+Or by building as a shared lib (or static by editing the premake5.lua file) using the [premake](https://premake.github.io) tool and adding the include/* files to your codebase.
 
 ```
 premake gmake
