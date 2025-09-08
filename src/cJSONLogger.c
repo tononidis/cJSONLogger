@@ -164,6 +164,14 @@
 
 #endif
 
+typedef struct LogInfo {
+    char timeStamp[MAX_TIME_STR_LEN];
+    CJSON_LOG_LEVEL_E logLevel;
+    char* fileName;
+    char* funcName;
+    int fileLine;
+} LogInfo_s;
+
 /**
  * @struct Queue
  *
@@ -248,29 +256,9 @@ static inline const char* cJSONLoggerGetLogLevelStr(CJSON_LOG_LEVEL_E logLevel)
  * @param logLevel The log level of the log message.
  * @param logMsg The log message to push.
  */
-static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const char* logMsg)
+static void cJSONLoggerPushLog(cJSON* node, LogInfo_s* logInfo, const char* logMsg)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-
-    struct tm tmInfo;
-    localtime_r(&ts.tv_sec, &tmInfo);
-
-    char timeStr[MAX_TIME_STR_LEN];
-    snprintf(timeStr, sizeof(timeStr), "%d-%d-%d %d:%d:%d.%ld",
-        tmInfo.tm_year + 1900,
-        tmInfo.tm_mon + 1,
-        tmInfo.tm_mday,
-        tmInfo.tm_hour,
-        tmInfo.tm_min,
-        tmInfo.tm_sec,
-        ts.tv_nsec);
-
-    char* logMsgDup = strdup(logMsg);
-    char* fileName = strtok(logMsgDup, "$$");
-    char* funcName = strtok(NULL, "$$");
-    char* fileLine = strtok(NULL, "$$");
-    char* userLog = strtok(NULL, "$$");
+    CJSON_LOGGER_ASSERT_NEQ(logInfo, NULL, NULL);
 
     pthread_mutex_lock(&s_g_rootNodeMutex);
     if (node == NULL) {
@@ -285,28 +273,22 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
     cJSON* log = cJSON_CreateObject();
 
     cJSON_AddItemToArray(logs, log);
-    cJSON_AddItemToObject(log, "Time", cJSON_CreateString(timeStr));
-    cJSON_AddItemToObject(log, "LogLevel", cJSON_CreateString(cJSONLoggerGetLogLevelStr(logLevel)));
+    cJSON_AddItemToObject(log, "Time", cJSON_CreateString(logInfo->timeStamp));
+    cJSON_AddItemToObject(log, "LogLevel", cJSON_CreateString(cJSONLoggerGetLogLevelStr(logInfo->logLevel)));
 
-    if (fileName != NULL) {
-        cJSON_AddItemToObject(log, "FileName", cJSON_CreateString(fileName));
+    if (logInfo->fileName != NULL) {
+        cJSON_AddItemToObject(log, "FileName", cJSON_CreateString(logInfo->fileName));
     }
 
-    if (funcName != NULL) {
-        cJSON_AddItemToObject(log, "FuncName", cJSON_CreateString(funcName));
+    if (logInfo->funcName != NULL) {
+        cJSON_AddItemToObject(log, "FuncName", cJSON_CreateString(logInfo->funcName));
     }
 
-    if (fileLine != NULL) {
-        cJSON_AddItemToObject(log, "FileLine", cJSON_CreateNumber(atoi(fileLine)));
+    if (logInfo->fileLine != 0) {
+        cJSON_AddItemToObject(log, "FileLine", cJSON_CreateNumber(logInfo->fileLine));
     }
 
-    if (userLog != NULL) {
-        cJSON_AddItemToObject(log, "Log", cJSON_CreateString(userLog));
-    }
-
-    else {
-        cJSON_AddItemToObject(log, "Log", cJSON_CreateString(logMsg));
-    }
+    cJSON_AddItemToObject(log, "Log", cJSON_CreateString(logMsg));
 
     pthread_mutex_unlock(&s_g_rootNodeMutex);
 
@@ -318,38 +300,6 @@ static void cJSONLoggerPushLog(cJSON* node, CJSON_LOG_LEVEL_E logLevel, const ch
 
     else {
         pthread_mutex_unlock(&s_g_cLoggerMutex);
-    }
-
-    free(logMsgDup);
-}
-
-/**
- * @brief Log a message to a specific JSON node and move the the next sub node recursively.
- *
- * @param jsonPath The path to the JSON node.
- * @param size The size of the JSON path.
- * @param node The JSON node to log the message to.
- * @param logLevel The log level of the message.
- * @param logMsg The log message.
- */
-static void cJSONLoggerLogRecur(char* jsonPath[], unsigned int size, cJSON* node, CJSON_LOG_LEVEL_E logLevel, const char* logMsg)
-{
-    const char* nodeName = jsonPath[0];
-
-    pthread_mutex_lock(&s_g_rootNodeMutex);
-    if (cJSON_HasObjectItem(node, nodeName) == 0) {
-        cJSON_AddItemToObject(node, nodeName, cJSON_CreateObject());
-    }
-
-    cJSON* subNode = cJSON_GetObjectItem(node, nodeName);
-    pthread_mutex_unlock(&s_g_rootNodeMutex);
-
-    if (size == 1) {
-        cJSONLoggerPushLog(subNode, logLevel, logMsg);
-    }
-
-    else {
-        cJSONLoggerLogRecur(&jsonPath[1], size - 1, subNode, logLevel, logMsg);
     }
 }
 
@@ -412,19 +362,25 @@ void cJSONLoggerDestroy()
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 }
 
-void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
+static cJSON* createJsonObject(cJSON* node, const char* nodeName)
 {
-    pthread_mutex_lock(&s_g_rootNodeMutex);
-    if (s_g_rootNode == NULL) {
-        pthread_mutex_unlock(&s_g_rootNodeMutex);
-        return;
+    cJSON* newNode = NULL;
+    if (cJSON_HasObjectItem(node, nodeName) != 0) {
+        newNode = cJSON_GetObjectItem(node, nodeName);
+        CJSON_LOGGER_ASSERT_NEQ(newNode, NULL, NULL);
     }
 
-    pthread_mutex_unlock(&s_g_rootNodeMutex);
-    if (size < 0) {
-        return;
+    else {
+        newNode = cJSON_CreateObject();
+        CJSON_LOGGER_ASSERT_NEQ(newNode, NULL, NULL);
+        cJSON_AddItemToObject(node, nodeName, newNode);
     }
 
+    return newNode;
+}
+
+void cJSONLoggerLog(CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
+{
     pthread_mutex_lock(&s_g_cLoggerMutex);
     if (logLevel > __CJSON_LOG_LEVEL_START && logLevel > s_g_logLevel && logLevel < __CJSON_LOG_LEVEL_END) {
         pthread_mutex_unlock(&s_g_cLoggerMutex);
@@ -432,34 +388,93 @@ void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLe
     }
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
-    va_list args;
-    va_start(args, fmt);
-    char logMsg[MAX_LOG_MSG_LEN];
-    vsnprintf(logMsg, sizeof(logMsg), fmt, args);
-    va_end(args);
-
-    if (size == 0) {
-        cJSONLoggerPushLog(NULL, logLevel, logMsg);
+    pthread_mutex_lock(&s_g_rootNodeMutex);
+    if (s_g_rootNode == NULL) {
+        pthread_mutex_unlock(&s_g_rootNodeMutex);
         return;
     }
-
-    const char* nodeName = jsonPath[0];
-
-    pthread_mutex_lock(&s_g_rootNodeMutex);
-    if (cJSON_HasObjectItem(s_g_rootNode, nodeName) == 0) {
-        cJSON_AddItemToObject(s_g_rootNode, nodeName, cJSON_CreateObject());
-    }
-
-    cJSON* subNode = cJSON_GetObjectItem(s_g_rootNode, nodeName);
     pthread_mutex_unlock(&s_g_rootNodeMutex);
 
-    if (size == 1) {
-        cJSONLoggerPushLog(subNode, logLevel, logMsg);
+    va_list args;
+    va_start(args, fmt);
+
+    LogInfo_s logInfo = { 0 };
+    logInfo.logLevel = logLevel;
+
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    struct tm tmInfo;
+    localtime_r(&ts.tv_sec, &tmInfo);
+
+    snprintf(logInfo.timeStamp, sizeof(logInfo.timeStamp), "%d-%d-%d %d:%d:%d.%ld",
+        tmInfo.tm_year + 1900,
+        tmInfo.tm_mon + 1,
+        tmInfo.tm_mday,
+        tmInfo.tm_hour,
+        tmInfo.tm_min,
+        tmInfo.tm_sec,
+        ts.tv_nsec);
+
+    if (strncmp(fmt, "%s$$%s$$%d$$", strlen("%s$$%s$$%d$$")) == 0) {
+        logInfo.fileName = va_arg(args, char*);
+        logInfo.funcName = va_arg(args, char*);
+        logInfo.fileLine = va_arg(args, int);
+        fmt += strlen("%s$$%s$$%d$$");
     }
 
-    else {
-        cJSONLoggerLogRecur(&jsonPath[1], size - 1, subNode, logLevel, logMsg);
+    cJSON* node = s_g_rootNode;
+    char logMsgFmt[MAX_LOG_MSG_LEN] = { 0 };
+    char* pLogMsgFmt = logMsgFmt;
+
+    while (*fmt != '\0') {
+        if (*fmt == '%') {
+            *fmt++;
+            switch (*fmt) {
+
+            case '\0': {
+                continue;
+            }
+
+            case JO_CHAR: {
+                *pLogMsgFmt = '\0';
+                if (strlen(logMsgFmt) != 0) {
+                    char logMsg2[MAX_LOG_MSG_LEN] = { 0 };
+                    vsnprintf(logMsg2, sizeof(logMsg2), logMsgFmt, args);
+                    cJSONLoggerPushLog(node, &logInfo, logMsg2);
+
+                    memset(logMsgFmt, 0, sizeof(logMsgFmt));
+                    pLogMsgFmt = logMsgFmt;
+                }
+
+                char* c = va_arg(args, char*);
+                node = createJsonObject(node, c);
+                break;
+            }
+
+            default: {
+                *pLogMsgFmt++ = '%';
+                *pLogMsgFmt++ = *fmt;
+                break;
+            }
+            }
+        }
+
+        else {
+            *pLogMsgFmt++ = *fmt;
+        }
+
+        *fmt++;
     }
+
+    *pLogMsgFmt = '\0';
+    if (strlen(logMsgFmt) != 0) {
+        char logMsg2[MAX_LOG_MSG_LEN] = { 0 };
+        vsnprintf(logMsg2, sizeof(logMsg2), logMsgFmt, args);
+        cJSONLoggerPushLog(node, &logInfo, logMsg2);
+    }
+
+    va_end(args);
 }
 
 void cJSONLoggerDump()

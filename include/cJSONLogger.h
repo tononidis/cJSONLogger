@@ -11,6 +11,21 @@
 #ifndef CJSON_LOGGER_H
 #define CJSON_LOGGER_H
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+
+#define JO_ID 1
+#define JA_ID 2
+#define JV_ID 3
+
+#define JO STR(JO_ID)
+#define JA STR(JA_ID)
+#define JV STR(JV_ID)
+
+#define JO_CHAR ('0' + JO_ID)
+#define JA_CHAR ('0' + JA_ID)
+#define JV_CHAR ('0' + JV_ID)
+
 #include <string.h>
 
 /**
@@ -58,7 +73,7 @@ void cJSONLoggerDestroy();
  *
  * @note Prefer to use the CJSON_LOG* macros instead.
  */
-void cJSONLoggerLog(char* jsonPath[], unsigned int size, CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...);
+void cJSONLoggerLog(CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...);
 
 /**
  * @brief Dump the contents of the cJSONLogger into a file.
@@ -94,13 +109,9 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
  *
  * @brief Wraps the logging functionality for easier use.
  */
-#define CJSON_LOG(jsonPath, logLevel, fmt, ...)                                                                                                                  \
-    do {                                                                                                                                                         \
-        if (jsonPath == NULL || sizeof(jsonPath) == 0) {                                                                                                         \
-            cJSONLoggerLog(NULL, 0, logLevel, "%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__);                                          \
-        } else {                                                                                                                                                 \
-            cJSONLoggerLog(jsonPath, sizeof(jsonPath) / sizeof(jsonPath[0]), logLevel, "%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
-        }                                                                                                                                                        \
+#define CJSON_LOG(logLevel, fmt, ...)                                                                      \
+    do {                                                                                                   \
+        cJSONLoggerLog(logLevel, "%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
     } while (0);
 
 /**
@@ -108,39 +119,39 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
  *
  * @brief Logs a critical message.
  */
-#define CJSON_LOG_CRITICAL(jsonPath, fmt, ...) \
-    CJSON_LOG(jsonPath, CJSON_LOG_LEVEL_CRITICAL, fmt, ##__VA_ARGS__);
+#define CJSON_LOG_CRITICAL(fmt, ...) \
+    CJSON_LOG(CJSON_LOG_LEVEL_CRITICAL, fmt, ##__VA_ARGS__);
 
 /**
  * @def CJSON_LOG_ERROR
  *
  * @brief Logs an error message.
  */
-#define CJSON_LOG_ERROR(jsonPath, fmt, ...) \
-    CJSON_LOG(jsonPath, CJSON_LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__);
+#define CJSON_LOG_ERROR(fmt, ...) \
+    CJSON_LOG(CJSON_LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__);
 
 /**
  * @def CJSON_LOG_WARN
  *
  * @brief Logs a warn message.
  */
-#define CJSON_LOG_WARN(jsonPath, fmt, ...) \
-    CJSON_LOG(jsonPath, CJSON_LOG_LEVEL_WARN, fmt, ##__VA_ARGS__);
+#define CJSON_LOG_WARN(fmt, ...) \
+    CJSON_LOG(CJSON_LOG_LEVEL_WARN, fmt, ##__VA_ARGS__);
 
 /**
  * @def CJSON_LOG_INFO
  *
  * @brief Logs an info message.
  */
-#define CJSON_LOG_INFO(jsonPath, fmt, ...) \
-    CJSON_LOG(jsonPath, CJSON_LOG_LEVEL_INFO, fmt, ##__VA_ARGS__);
+#define CJSON_LOG_INFO(fmt, ...) \
+    CJSON_LOG(CJSON_LOG_LEVEL_INFO, fmt, ##__VA_ARGS__);
 
 /**
  * @def CJSON_LOG_DEBUG
  *
  * @brief Logs a debug message.
  */
-#define CJSON_LOG_DEBUG(jsonPath, fmt, ...) \
-    CJSON_LOG(jsonPath, CJSON_LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__);
+#define CJSON_LOG_DEBUG(fmt, ...) \
+    CJSON_LOG(CJSON_LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__);
 
 #endif // CJSON_LOGGER_H
