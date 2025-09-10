@@ -8,10 +8,10 @@
  * @date 2025-08-26
  */
 
-#include <string.h>
-
 #ifndef CJSON_LOGGER_H
 #define CJSON_LOGGER_H
+
+#include <string.h>
 
 /**
  * @def STR_HELPER
