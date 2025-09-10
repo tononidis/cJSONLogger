@@ -142,7 +142,7 @@ static int test_cJSONLogger_log_no_node(void)
 static int test_cJSONLogger_log_one_node(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    CJSON_LOG_INFO("%" JO "bar", "foo");
+    CJSON_LOG_INFO("%" JNO "bar", "foo");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -244,7 +244,7 @@ static int test_cJSONLogger_log_one_node(void)
 static int test_cJSONLogger_log_three_nodes(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    CJSON_LOG_ERROR("%" JO "%" JO "%" JO "qux", "foo", "bar", "baz");
+    CJSON_LOG_ERROR("%" JNO "%" JNO "%" JNO "qux", "foo", "bar", "baz");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -356,7 +356,7 @@ static int test_cJSONLogger_log_three_nodes(void)
 static int test_cJSONLogger_severity_not_reached(void)
 {
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    CJSON_LOG_DEBUG("%" JO "bar", "foo");
+    CJSON_LOG_DEBUG("%" JNO "bar", "foo");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -390,7 +390,7 @@ static int test_cJSONLogger_severity_reached(void)
     cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
     cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_DEBUG);
 
-    CJSON_LOG_DEBUG("%" JO "bar", "foo");
+    CJSON_LOG_DEBUG("%" JNO "bar", "foo");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -474,7 +474,7 @@ static int test_cJSONLogger_dump(void)
         return FAILED;
     }
 
-    CJSON_LOG_INFO("%" JO "bar", "foo")
+    CJSON_LOG_INFO("%" JNO "bar", "foo")
 
     if (cJSON_GetObjectItem(loggedJson, "foo") != NULL) {
         RELEASE_RESOURCE_AND_RETURN_FAIL(loggedJson, cJSON_Delete);

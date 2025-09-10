@@ -8,25 +8,49 @@
  * @date 2025-08-26
  */
 
+#include <string.h>
+
 #ifndef CJSON_LOGGER_H
 #define CJSON_LOGGER_H
 
+/**
+ * @def STR_HELPER
+ *
+ * @param x The define to transform into a string.
+ *
+ * @brief Logs a warn message.
+ */
 #define STR_HELPER(x) #x
+
+/**
+ * @def STR
+ *
+ * @param x The number to transform into a string.
+ *
+ * @brief Transform a number into a double quote string.
+ */
 #define STR(x) STR_HELPER(x)
 
-#define JO_ID 1
-#define JA_ID 2
-#define JV_ID 3
+/**
+ * @def JNO_ID
+ *
+ * @brief The id for the formatter for createing a json node object.
+ */
+#define JNO_ID 1
 
-#define JO STR(JO_ID)
-#define JA STR(JA_ID)
-#define JV STR(JV_ID)
+/**
+ * @def JNO
+ *
+ * @brief The string representation of the the JNO formatter
+ */
+#define JNO STR(JNO_ID)
 
-#define JO_CHAR ('0' + JO_ID)
-#define JA_CHAR ('0' + JA_ID)
-#define JV_CHAR ('0' + JV_ID)
-
-#include <string.h>
+/**
+ * @def JO_CHAR
+ *
+ * @brief The char representation of the the JNO formatter
+ */
+#define JNO_CHAR ('0' + JNO_ID)
 
 /**
  * @enum CJSON_LOG_LEVEL
@@ -69,7 +93,7 @@ void cJSONLoggerDestroy();
  * @param fmt The log message format.
  * @param ... Additional arguments for the format.
  *
- * @warning The "$$" delimiter is reserved and used to separate the file name, line number, and log message in the CJSON_LOG* macros.
+ * @warning The "$$%s$$%s$$%d$$" pattern is reserved when its placed infront of the log format and used to separate the file name, line number, and log message in the CJSON_LOG* macros.
  *
  * @note Prefer to use the CJSON_LOG* macros instead.
  */
@@ -107,15 +131,24 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
 /**
  * @def CJSON_LOG
  *
+ * @param logLevel The log level.
+ * @param fmt The log format.
+ * @param ... Additional arguments for the format.
+ *
  * @brief Wraps the logging functionality for easier use.
+ *
+ * @note This macro and its wrappers will log the file name, function name, file line as well.
  */
-#define CJSON_LOG(logLevel, fmt, ...)                                                                      \
-    do {                                                                                                   \
-        cJSONLoggerLog(logLevel, "%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+#define CJSON_LOG(logLevel, fmt, ...)                                                                        \
+    do {                                                                                                     \
+        cJSONLoggerLog(logLevel, "$$%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
     } while (0);
 
 /**
  * @def CJSON_LOG_CRITICAL
+ *
+ * @param fmt The log format.
+ * @param ... Additional arguments for the format.
  *
  * @brief Logs a critical message.
  */
@@ -125,6 +158,9 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
 /**
  * @def CJSON_LOG_ERROR
  *
+ * @param fmt The log format.
+ * @param ... Additional arguments for the format.
+ *
  * @brief Logs an error message.
  */
 #define CJSON_LOG_ERROR(fmt, ...) \
@@ -132,6 +168,9 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
 
 /**
  * @def CJSON_LOG_WARN
+ *
+ * @param fmt The log format.
+ * @param ... Additional arguments for the format.
  *
  * @brief Logs a warn message.
  */
@@ -141,6 +180,9 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
 /**
  * @def CJSON_LOG_INFO
  *
+ * @param fmt The log format.
+ * @param ... Additional arguments for the format.
+ *
  * @brief Logs an info message.
  */
 #define CJSON_LOG_INFO(fmt, ...) \
@@ -148,6 +190,9 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
 
 /**
  * @def CJSON_LOG_DEBUG
+ *
+ * @param fmt The log format.
+ * @param ... Additional arguments for the format.
  *
  * @brief Logs a debug message.
  */

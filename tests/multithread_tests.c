@@ -179,6 +179,8 @@ static void* initLoggerHandler(void* ctx)
 static void* logHandler(void* ctx)
 {
     CJSON_LOG_CRITICAL("foo");
+    CJSON_LOG_CRITICAL("%" JNO "foo", "node");
+    CJSON_LOG_CRITICAL("%" JNO "foo2", "node");
     return NULL;
 }
 
