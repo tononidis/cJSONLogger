@@ -141,7 +141,7 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
  */
 #define CJSON_LOG(logLevel, fmt, ...)                                                                        \
     do {                                                                                                     \
-        cJSONLoggerLog(logLevel, "$$%s$$%s$$%d$$" fmt, __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+        cJSONLoggerLog(logLevel, "$$%s$$%s$$%d$$" fmt, __FILENAME__, __func__, __LINE__, ##__VA_ARGS__); \
     } while (0);
 
 /**
