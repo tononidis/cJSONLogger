@@ -448,8 +448,6 @@ void cJSONLoggerLog(CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
             fmt++;
             switch (*fmt) {
 
-                // case '\n'
-
             case JNO_CHAR: {
                 *pLogMsgFmt = '\0';
                 if (strlen(logMsgFmt) != 0) {
