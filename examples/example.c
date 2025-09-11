@@ -18,7 +18,9 @@
  */
 int main(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json");
+    if (cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json") != 0) {
+        return -1;
+    }
 
     CJSON_LOG_DEBUG("%" JNO "value %d", "foo", 1); // Will not log since the log level starts from INFO.
     CJSON_LOG_INFO("%" JNO "%" JNO "value %d", "foo", "bar", 2); // Log with two node levels.

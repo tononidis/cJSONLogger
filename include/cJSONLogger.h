@@ -74,8 +74,10 @@ typedef enum CJSON_LOG_LEVEL {
  *
  * @param logLevel The starting log level severity threshold.
  * @param filePath Path to file where JSON logs will be stored.
+ *
+ * @return int, 0 in case of success, negative value in case of failure.
  */
-void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath);
+int cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath);
 
 /**
  * @brief Delete the cJSON logger and clean up resources.
@@ -139,8 +141,8 @@ void cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_E logLevel);
  *
  * @note This macro and its wrappers will log the file name, function name, file line as well.
  */
-#define CJSON_LOG(logLevel, fmt, ...)                                                                        \
-    do {                                                                                                     \
+#define CJSON_LOG(logLevel, fmt, ...)                                                                    \
+    do {                                                                                                 \
         cJSONLoggerLog(logLevel, "$$%s$$%s$$%d$$" fmt, __FILENAME__, __func__, __LINE__, ##__VA_ARGS__); \
     } while (0);
 

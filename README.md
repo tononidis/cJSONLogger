@@ -22,8 +22,7 @@ Then use the CJSON_LOG_* macros to log your data.
 
 ```
 cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json");
-char* jsonNodes[] = { "foo", "bar" };
-CJSON_LOG_WARN(jsonNodes, "value %d", 4);
+CJSON_LOG_WARN("%" JNO "%" JNO "value %d", "foo", "bar", 4);
 cJSONLoggerDump();
 ```
 
@@ -65,7 +64,7 @@ Automatic mechanisms to avoid a potential scenario of running out of memory exis
 ## Features
 
 ### Thread safe
-The cJSONLogger is safe to use when your application is multithreaded.
+The cJSONLogger is safe to use when your application is multithreaded and different threads attempt to log (or use any other cJSONLogger API) at the same time.
 
 ### Automatic file rotation
 When to many line of logs are written (MAX_LOG_COUNT = 500).

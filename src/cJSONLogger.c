@@ -20,6 +20,13 @@
 #include <time.h>
 
 /**
+ * @def MAX_FILE_NAME_LEN
+ *
+ * @brief The maximum file name length where the logs will be stored.
+ */
+#define MAX_FILE_NAME_LEN 128
+
+/**
  * @def MAX_TIME_STR_LEN
  *
  * @brief The maximum length of a string representation of time.
@@ -333,8 +340,12 @@ static cJSON* createJsonObject(cJSON* node, const char* nodeName)
     return nextNode;
 }
 
-void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
+int cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
 {
+    if (strlen(filePath) > MAX_FILE_NAME_LEN) {
+        return -1;
+    }
+
     pthread_mutex_lock(&s_g_rootNodeMutex);
     if (s_g_rootNode == NULL) {
         s_g_rootNode = cJSON_CreateObject();
@@ -356,6 +367,8 @@ void cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
 
     int ret = atexit(cJSONLoggerDestroy);
     CJSON_LOGGER_ASSERT_EQ(ret, 0);
+
+    return 0;
 }
 
 void cJSONLoggerDestroy()
@@ -450,7 +463,7 @@ void cJSONLoggerLog(CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
 
             case JNO_CHAR: {
                 *pLogMsgFmt = '\0';
-                if (strlen(logMsgFmt) != 0) {
+                if (strnlen(logMsgFmt, MAX_LOG_MSG_LEN) != 0) {
                     char logMsg[MAX_LOG_MSG_LEN] = { 0 };
                     vsnprintf(logMsg, sizeof(logMsg) - 1, logMsgFmt, args);
                     cJSONLoggerPushLog(node, &logInfo, logMsg);
@@ -466,7 +479,8 @@ void cJSONLoggerLog(CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
 
             default: {
                 *pLogMsgFmt++ = '%';
-                *pLogMsgFmt++ = *fmt++;
+                *pLogMsgFmt++ = *fmt;
+                fmt++;
                 continue;
             }
             }
@@ -480,7 +494,7 @@ void cJSONLoggerLog(CJSON_LOG_LEVEL_E logLevel, const char* fmt, ...)
     }
 
     *pLogMsgFmt = '\0';
-    if (strlen(logMsgFmt) > 0) {
+    if (strnlen(logMsgFmt, MAX_LOG_MSG_LEN) > 0) {
         char logMsg[MAX_LOG_MSG_LEN] = { 0 };
         vsnprintf(logMsg, sizeof(logMsg) - 1, logMsgFmt, args);
         cJSONLoggerPushLog(node, &logInfo, logMsg);
@@ -533,7 +547,7 @@ void cJSONLoggerRotate()
         CJSON_LOGGER_ASSERT_NEQ(s_g_rotatedFilesQueue, NULL);
     }
 
-    size_t rotatedFileLen = strlen(s_g_filePath) + strlen(timeStr) + 2;
+    size_t rotatedFileLen = strlen(s_g_filePath) + strnlen(timeStr, MAX_TIME_STR_LEN) + 2;
     char* rotatedFilePath = (char*)malloc(rotatedFileLen);
     CJSON_LOGGER_ASSERT_NEQ(rotatedFilePath, NULL);
 

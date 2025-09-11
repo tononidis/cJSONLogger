@@ -165,7 +165,8 @@ static void* fileWatcherHandler(void* ctx)
  */
 static void* initLoggerHandler(void* ctx)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
     return NULL;
 }
 
