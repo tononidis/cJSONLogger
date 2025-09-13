@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - version_2
+      - features
 
 jobs:
   test:
