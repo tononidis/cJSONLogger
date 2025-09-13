@@ -165,7 +165,8 @@ static void* fileWatcherHandler(void* ctx)
  */
 static void* initLoggerHandler(void* ctx)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
     return NULL;
 }
 
@@ -178,7 +179,9 @@ static void* initLoggerHandler(void* ctx)
  */
 static void* logHandler(void* ctx)
 {
-    CJSON_LOG_CRITICAL(NULL, "foo");
+    CJSON_LOG_CRITICAL("foo");
+    CJSON_LOG_CRITICAL("%" JNO "foo", "node");
+    CJSON_LOG_CRITICAL("%" JNO "foo2", "node");
     return NULL;
 }
 

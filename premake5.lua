@@ -34,6 +34,8 @@ project "cJSONLogger"
 		"pthread"
 	}
 
+	buildoptions { "-Wall", "-Wextra", "-Wpedantic", "-Werror", "-Wuninitialized", "-Wunreachable-code", "-Wconversion", "-Wsign-conversion", "-fstack-protector-strong" }
+
 	filter "configurations:debug"
 		defines "CJSONLOGGER_DEBUG"
 		runtime "Debug"

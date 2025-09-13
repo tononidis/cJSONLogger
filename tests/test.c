@@ -24,7 +24,7 @@
  */
 static int test_cJSONLogger_log_without_init_with_disabled_severity(void)
 {
-    CJSON_LOG_INFO(NULL, "");
+    CJSON_LOG_INFO("");
     return PASSED;
 }
 
@@ -38,7 +38,7 @@ static int test_cJSONLogger_log_without_init_with_disabled_severity(void)
 static int test_cJSONLogger_log_without_init_with_enabled_severity(void)
 {
     cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_INFO);
-    CJSON_LOG_INFO(NULL, "");
+    CJSON_LOG_INFO("");
     return PASSED;
 }
 
@@ -49,8 +49,9 @@ static int test_cJSONLogger_log_without_init_with_enabled_severity(void)
  */
 static int test_cJSONLogger_log_no_node(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    CJSON_LOG_CRITICAL(NULL, "bar");
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
+    CJSON_LOG_CRITICAL("bar");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -141,9 +142,9 @@ static int test_cJSONLogger_log_no_node(void)
  */
 static int test_cJSONLogger_log_one_node(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    char* jsonPath[] = { "foo" };
-    CJSON_LOG_INFO(jsonPath, "bar");
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
+    CJSON_LOG_INFO("%" JNO "bar", "foo");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -244,9 +245,9 @@ static int test_cJSONLogger_log_one_node(void)
  */
 static int test_cJSONLogger_log_three_nodes(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    char* jsonPath[] = { "foo", "bar", "baz" };
-    CJSON_LOG_ERROR(jsonPath, "qux");
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
+    CJSON_LOG_ERROR("%" JNO "%" JNO "%" JNO "qux", "foo", "bar", "baz");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -357,9 +358,9 @@ static int test_cJSONLogger_log_three_nodes(void)
  */
 static int test_cJSONLogger_severity_not_reached(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    char* jsonPath[] = { "foo" };
-    CJSON_LOG_DEBUG(jsonPath, "bar");
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
+    CJSON_LOG_DEBUG("%" JNO "bar", "foo");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -390,11 +391,11 @@ static int test_cJSONLogger_severity_not_reached(void)
  */
 static int test_cJSONLogger_severity_reached(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
-    char* jsonPath[] = { "foo" };
-
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
     cJSONLoggerSetLogLevel(CJSON_LOG_LEVEL_DEBUG);
-    CJSON_LOG_DEBUG(jsonPath, "bar");
+
+    CJSON_LOG_DEBUG("%" JNO "bar", "foo");
     cJSONLoggerDump();
 
     char* logData = readFile(LOG_FILE);
@@ -425,10 +426,11 @@ static int test_cJSONLogger_severity_reached(void)
  */
 static int test_cJSONLogger_destroy(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
     cJSONLoggerDestroy();
 
-    CJSON_LOG_CRITICAL(NULL, "bar");
+    CJSON_LOG_CRITICAL("bar");
 
     cJSONLoggerDump();
 
@@ -459,9 +461,10 @@ static int test_cJSONLogger_destroy(void)
  */
 static int test_cJSONLogger_dump(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
 
-    CJSON_LOG_INFO(NULL, "bar");
+    CJSON_LOG_INFO("bar");
 
     cJSONLoggerDump();
 
@@ -478,8 +481,7 @@ static int test_cJSONLogger_dump(void)
         return FAILED;
     }
 
-    char* jsonNode[] = { "foo" };
-    CJSON_LOG_INFO(jsonNode, "bar");
+    CJSON_LOG_INFO("%" JNO "bar", "foo")
 
     if (cJSON_GetObjectItem(loggedJson, "foo") != NULL) {
         RELEASE_RESOURCE_AND_RETURN_FAIL(loggedJson, cJSON_Delete);
@@ -519,35 +521,36 @@ static int test_cJSONLogger_dump(void)
  */
 static int test_cJSONLogger_rotate(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    assert(res == 0);
 
-    CJSON_LOG_INFO(NULL, "bar");
+    CJSON_LOG_INFO("bar");
 
-    int res = -1;
+    int ret = -1;
 
     pthread_t mainThread = pthread_self();
     pthread_t pThread;
-    res = pthread_create(&pThread, NULL, fileWatcherHandler, &mainThread);
-    assert(res == 0);
+    ret = pthread_create(&pThread, NULL, fileWatcherHandler, &mainThread);
+    assert(ret == 0);
 
     int sig = -1;
     sigset_t sigSet;
-    res = sigemptyset(&sigSet);
-    assert(res == 0);
-    res = sigaddset(&sigSet, SIGUSR1);
-    assert(res == 0);
+    ret = sigemptyset(&sigSet);
+    assert(ret == 0);
+    ret = sigaddset(&sigSet, SIGUSR1);
+    assert(ret == 0);
 
-    res = pthread_sigmask(SIG_BLOCK, &sigSet, NULL);
-    assert(res == 0);
+    ret = pthread_sigmask(SIG_BLOCK, &sigSet, NULL);
+    assert(ret == 0);
 
-    res = sigwait(&sigSet, &sig);
-    assert(res == 0);
+    ret = sigwait(&sigSet, &sig);
+    assert(ret == 0);
 
     cJSONLoggerRotate();
 
     char* rotatedFileName = NULL;
-    res = pthread_join(pThread, (void**)&rotatedFileName);
-    assert(res == 0);
+    ret = pthread_join(pThread, (void**)&rotatedFileName);
+    assert(ret == 0);
 
     assert(rotatedFileName != NULL);
 

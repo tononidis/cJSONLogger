@@ -9,6 +9,7 @@
  */
 
 #include <cJSONLogger.h>
+#include <stdio.h>
 
 /**
  * @brief Main entry point for the example application.
@@ -17,26 +18,17 @@
  */
 int main(void)
 {
-    cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json");
+    if (cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, "log.json") != 0) {
+        return -1;
+    }
 
-    char* level11[] = { "foo" };
+    CJSON_LOG_DEBUG("%" JNO "value %d", "foo", 1); // Will not log since the log level starts from INFO.
+    CJSON_LOG_INFO("%" JNO "%" JNO "value %d", "foo", "bar", 2); // Log with two node levels.
+    CJSON_LOG_WARN("%" JNO "%" JNO "value %d", "foo", "bar2", 3); // Log with two node levels.
+    CJSON_LOG_ERROR("%" JNO "%" JNO "%" JNO "value %d", "foo", "bar", "baz", 4); // Log with three node levels.
+    CJSON_LOG_CRITICAL("%" JNO "value %d", "qix", 5); // Log with one node level.
 
-    char* level21[] = { "foo", "bar" };
-    char* level22[] = { "foo", "bar2" };
-
-    char* level3[] = { "foo", "bar", "baz" };
-
-    char* level12[] = { "other" };
-    char* empty[] = {};
-
-    CJSON_LOG_DEBUG(level11, "value %d", 1);
-    CJSON_LOG_INFO(level21, "value %d", 2);
-    CJSON_LOG_WARN(level22, "value %d", 3);
-    CJSON_LOG_ERROR(level3, "value %d", 4);
-    CJSON_LOG_CRITICAL(level12, "value %d", 5);
-
-    CJSON_LOG_INFO(empty, "value %d", 6);
-    CJSON_LOG_INFO(NULL, "value %d", 7);
+    CJSON_LOG_INFO("value %d", 6); // Log the the root node.
 
     // The cJSONLogger lib registers an atexit function that will handle this automatically
     // cJSONLoggerDump();
