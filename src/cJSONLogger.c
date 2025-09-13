@@ -212,6 +212,11 @@ static Queue_s* s_g_rotatedFilesQueue = NULL;
 static cJSON* s_g_rootNode = NULL;
 
 /**
+ * @brief File descriptor where logs will be stored.
+ */
+static FILE* s_g_file = NULL;
+
+/**
  * @brief File path where logs will be stored.
  */
 static char* s_g_filePath = NULL;
@@ -361,8 +366,14 @@ int cJSONLoggerInit(CJSON_LOG_LEVEL_E logLevel, const char* filePath)
     }
 
     s_g_filePath = strdup(filePath);
-    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
 
+    if (s_g_file != NULL) {
+        fclose(s_g_file);
+    }
+    s_g_file = fopen(s_g_filePath, "w");
+
+    CJSON_LOGGER_ASSERT_NEQ(s_g_filePath, NULL);
+    CJSON_LOGGER_ASSERT_NEQ(s_g_file, NULL);
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
     int ret = atexit(cJSONLoggerDestroy);
@@ -385,8 +396,13 @@ void cJSONLoggerDestroy()
     pthread_mutex_lock(&s_g_cLoggerMutex);
     if (s_g_filePath != NULL) {
         free(s_g_filePath);
+        s_g_filePath = NULL;
     }
-    s_g_filePath = NULL;
+
+    if (s_g_file != NULL) {
+        fclose(s_g_file);
+        s_g_file = NULL;
+    }
 
     if (s_g_rotatedFilesQueue != NULL) {
         for (int i = 0; i < s_g_rotatedFilesQueue->currentSize; i++) {
@@ -514,13 +530,9 @@ void cJSONLoggerDump()
     }
 
     pthread_mutex_lock(&s_g_cLoggerMutex);
-    FILE* file = fopen(s_g_filePath, "w");
-    CJSON_LOGGER_ASSERT_NEQ(file, NULL);
+    fprintf(s_g_file, "%s", string);
     pthread_mutex_unlock(&s_g_cLoggerMutex);
 
-    fprintf(file, "%s", string);
-
-    fclose(file);
     free(string);
 }
 
