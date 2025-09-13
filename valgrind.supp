@@ -1,16 +1,2 @@
 {
-   suppress_printf_after_child_aborts
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:_IO_file_doallocate
-   fun:_IO_doallocbuf
-   fun:_IO_file_overflow@@GLIBC_2.2.5
-   fun:_IO_new_file_xsputn
-   fun:_IO_file_xsputn@@GLIBC_2.2.5
-   fun:__printf_buffer_flush_to_file
-   fun:__printf_buffer_to_file_done
-   fun:__vfprintf_internal
-   fun:printf
-   fun:main
 }
