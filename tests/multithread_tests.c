@@ -18,11 +18,20 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
+/** @def _unused
+ *
+ * @brief Mark a variable as unused to avoid compiler warnings.
+ *
+ * @param x The variable to mark as unused.
+ */
+#define _unused(x) ((void)(x))
+
 /**
  * @brief A simple dynamic array (vector) implementation for storing pointers to data.
  */
-typedef struct Vector {
-    void** data;
+typedef struct Vector
+{
+    void **data;
     size_t size;
     size_t capacity;
 } Vector_s;
@@ -34,11 +43,11 @@ typedef struct Vector {
  *
  * @return A pointer to the initialized vector.
  */
-Vector_s* vectorInit(size_t capacity)
+Vector_s *vectorInit(size_t capacity)
 {
-    Vector_s* vector = malloc(sizeof(Vector_s));
+    Vector_s *vector = malloc(sizeof(Vector_s));
     assert(vector != NULL);
-    vector->data = malloc(capacity * sizeof(void*));
+    vector->data = malloc(capacity * sizeof(void *));
     assert(vector->data != NULL);
     vector->size = 0;
     vector->capacity = capacity;
@@ -50,10 +59,12 @@ Vector_s* vectorInit(size_t capacity)
  *
  * @param vector The vector to destroy.
  */
-void vectorDestroy(Vector_s* vector)
+void vectorDestroy(Vector_s *vector)
 {
-    if (vector != NULL) {
-        if (vector->data != NULL) {
+    if (vector != NULL)
+    {
+        if (vector->data != NULL)
+        {
             free(vector->data);
             vector->data = NULL;
         }
@@ -69,12 +80,13 @@ void vectorDestroy(Vector_s* vector)
  *
  * @param item The item to push.
  */
-void vectorPushBack(Vector_s* vector, void* item)
+void vectorPushBack(Vector_s *vector, void *item)
 {
     assert(vector != NULL);
-    if (vector->size >= vector->capacity) {
+    if (vector->size >= vector->capacity)
+    {
         vector->capacity *= 2;
-        vector->data = realloc(vector->data, vector->capacity * sizeof(void*));
+        vector->data = realloc(vector->data, vector->capacity * sizeof(void *));
         assert(vector->data != NULL);
     }
 
@@ -91,11 +103,13 @@ void vectorPushBack(Vector_s* vector, void* item)
  * @param funcB The function to run in the second thread.
  */
 #define RUN_TEST(funcA, funcB)                              \
-    do {                                                    \
+    do                                                      \
+    {                                                       \
         int res = -1;                                       \
         pthread_t pThreadA = 0;                             \
         pthread_t pThreadB = 0;                             \
         res = pthread_create(&pThreadA, NULL, funcA, NULL); \
+        _unused(res);                                       \
         assert(res == 0);                                   \
         res = pthread_create(&pThreadB, NULL, funcB, NULL); \
         assert(res == 0);                                   \
@@ -124,7 +138,7 @@ static atomic_int s_g_threadFlag = 1;
  *
  * @return always NULL
  */
-static void* fileWatcherHandler(void* ctx)
+static void *fileWatcherHandler(void *ctx)
 {
     int fd = inotify_init();
     assert(fd >= 0);
@@ -132,13 +146,15 @@ static void* fileWatcherHandler(void* ctx)
     int wd = inotify_add_watch(fd, "./", IN_CREATE);
     assert(wd >= 0);
 
-    Vector_s* createdFiles_v = vectorInit(8);
+    Vector_s *createdFiles_v = vectorInit(8);
 
-    while (atomic_load(&s_g_threadFlag) != 0) {
+    while (atomic_load(&s_g_threadFlag) != 0)
+    {
         char buffer[1024];
         ssize_t length = read(fd, buffer, sizeof(buffer));
+        _unused(length);
         assert(length >= 0);
-        struct inotify_event* event = (struct inotify_event*)&buffer;
+        struct inotify_event *event = (struct inotify_event *)&buffer;
 
         assert(event->len > 0);
         assert(event->mask & IN_CREATE);
@@ -147,6 +163,8 @@ static void* fileWatcherHandler(void* ctx)
     }
 
     int res = -1;
+    _unused(res);
+
     res = inotify_rm_watch(fd, wd);
     assert(res == 0);
 
@@ -163,9 +181,10 @@ static void* fileWatcherHandler(void* ctx)
  *
  * @return always NULL
  */
-static void* initLoggerHandler(void* ctx)
+static void *initLoggerHandler(void *ctx)
 {
     int res = cJSONLoggerInit(CJSON_LOG_LEVEL_INFO, LOG_FILE);
+    _unused(res);
     assert(res == 0);
     return NULL;
 }
@@ -177,7 +196,7 @@ static void* initLoggerHandler(void* ctx)
  *
  * @return always NULL
  */
-static void* logHandler(void* ctx)
+static void *logHandler(void *ctx)
 {
     CJSON_LOG_CRITICAL("foo");
     CJSON_LOG_CRITICAL("%" JNO "foo", "node");
@@ -192,7 +211,7 @@ static void* logHandler(void* ctx)
  *
  * @return always NULL
  */
-static void* dumpHandler(void* ctx)
+static void *dumpHandler(void *ctx)
 {
     cJSONLoggerDump();
     return NULL;
@@ -205,7 +224,7 @@ static void* dumpHandler(void* ctx)
  *
  * @return always NULL
  */
-static void* rotateHandler(void* ctx)
+static void *rotateHandler(void *ctx)
 {
     cJSONLoggerRotate();
     return NULL;
@@ -218,7 +237,7 @@ static void* rotateHandler(void* ctx)
  *
  * @return always NULL
  */
-static void* destroyHandler(void* ctx)
+static void *destroyHandler(void *ctx)
 {
     cJSONLoggerDestroy();
     return NULL;
@@ -249,12 +268,16 @@ int main(void)
     initLoggerHandler(NULL);
     rotateHandler(NULL);
 
-    Vector_s* createdFiles_v = NULL;
-    pthread_join(fileWatcherThread, (void**)&createdFiles_v);
+    Vector_s *createdFiles_v = NULL;
+    pthread_join(fileWatcherThread, (void **)&createdFiles_v);
 
-    for (size_t i = 0; i < createdFiles_v->size; i++) {
-        int res = remove((char*)createdFiles_v->data[i]);
+    for (size_t i = 0; i < createdFiles_v->size; i++)
+    {
+        int res = remove((char *)createdFiles_v->data[i]);
+        _unused(res);
+
         assert(res == 0);
+
         free(createdFiles_v->data[i]);
     }
 

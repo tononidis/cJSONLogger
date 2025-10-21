@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        configuration: [debug, release, dist]
+        configuration: [Debug, RelWithDebInfo , Release]
 
     steps:
     - name: Checkout

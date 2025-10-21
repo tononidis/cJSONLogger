@@ -20,6 +20,14 @@
 #include <string.h>
 #include <sys/inotify.h>
 
+/** @def _unused
+ *
+ * @brief Mark a variable as unused to avoid compiler warnings.
+ *
+ * @param x The variable to mark as unused.
+ */
+#define _unused(x) ((void)(x))
+
 /**
  * @def FUNC_NAME
  *
@@ -64,8 +72,10 @@
  * @return int, always FAILED.
  */
 #define RELEASE_RESOURCE_AND_RETURN_FAIL(ptr, freeFunc) \
-    do {                                                \
-        if (ptr != NULL) {                              \
+    do                                                  \
+    {                                                   \
+        if (ptr != NULL)                                \
+        {                                               \
             freeFunc(ptr);                              \
             ptr = NULL;                                 \
         }                                               \
@@ -77,7 +87,8 @@
  *
  * @brief Enumeration used to evaluate a test status.
  */
-typedef enum TestStatus {
+typedef enum TestStatus
+{
     PASSED = 0,
     FAILED
 } TestStatus_e;
@@ -91,7 +102,8 @@ typedef enum TestStatus {
  *
  * @var name The name of the test case.
  */
-typedef struct TestInfo {
+typedef struct TestInfo
+{
     TestStatus_e status;
     char name[MAX_TEST_NAME_LEN];
 } TestInfo_s;
@@ -99,7 +111,7 @@ typedef struct TestInfo {
 /**
  * @brief Pointer to the global test statistics JSON object.
  */
-static cJSON* s_g_testStatistics = NULL;
+static cJSON *s_g_testStatistics = NULL;
 
 /**
  * @brief Process id returned from forking the test process.
@@ -111,7 +123,8 @@ static pid_t s_g_pid = -1;
  */
 void freeChildResources(void)
 {
-    if (s_g_testStatistics != NULL) {
+    if (s_g_testStatistics != NULL)
+    {
         cJSON_Delete(s_g_testStatistics);
         s_g_testStatistics = NULL;
     }
@@ -126,20 +139,23 @@ void freeChildResources(void)
  *
  * @return char* A pointer to the contents of the file, or NULL on failure.
  */
-static char* readFile(const char* fileName)
+static char *readFile(const char *fileName)
 {
-    FILE* file = fopen(fileName, "r");
-    if (file == NULL) {
+    FILE *file = fopen(fileName, "r");
+    if (file == NULL)
+    {
         return NULL;
     }
 
     fseek(file, 0, SEEK_END);
-    size_t logSize = (size_t) ftell(file);
+    size_t logSize = (size_t)ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char* logData = malloc(logSize + 1);
-    if (logData != NULL) {
-        if (fread(logData, sizeof(char), logSize, file) != logSize) {
+    char *logData = malloc(logSize + 1);
+    if (logData != NULL)
+    {
+        if (fread(logData, sizeof(char), logSize, file) != logSize)
+        {
             free(logData);
             logData = NULL;
 
@@ -149,7 +165,8 @@ static char* readFile(const char* fileName)
         logData[logSize] = '\0';
     }
 
-    else {
+    else
+    {
         fclose(file);
         return NULL;
     }
@@ -165,35 +182,38 @@ static char* readFile(const char* fileName)
  */
 static void destroyTestSuite(void)
 {
-    if (s_g_pid == 0) {
-        if (s_g_testStatistics != NULL) {
+    if (s_g_pid == 0)
+    {
+        if (s_g_testStatistics != NULL)
+        {
             cJSON_Delete(s_g_testStatistics);
             s_g_testStatistics = NULL;
         }
         return;
     }
 
-    if (s_g_testStatistics != NULL) {
-        cJSON* passed = cJSON_GetObjectItem(s_g_testStatistics, "Passed");
-        cJSON* failed = cJSON_GetObjectItem(s_g_testStatistics, "Failed");
+    if (s_g_testStatistics != NULL)
+    {
+        cJSON *passed = cJSON_GetObjectItem(s_g_testStatistics, "Passed");
+        cJSON *failed = cJSON_GetObjectItem(s_g_testStatistics, "Failed");
 
         assert(passed != NULL);
         assert(failed != NULL);
 
         cJSON_AddItemToObject(s_g_testStatistics, "Summary", cJSON_CreateObject());
-        cJSON* summary = cJSON_GetObjectItem(s_g_testStatistics, "Summary");
+        cJSON *summary = cJSON_GetObjectItem(s_g_testStatistics, "Summary");
         assert(summary != NULL);
 
         cJSON_AddItemToObject(summary, "Passed", cJSON_CreateNumber(cJSON_GetArraySize(passed)));
         cJSON_AddItemToObject(summary, "Failed", cJSON_CreateNumber(cJSON_GetArraySize(failed)));
 
-        char* testsStatisticsStr = cJSON_Print(s_g_testStatistics);
+        char *testsStatisticsStr = cJSON_Print(s_g_testStatistics);
         assert(testsStatisticsStr != NULL);
 
         cJSON_Delete(s_g_testStatistics);
         s_g_testStatistics = NULL;
 
-        FILE* file = fopen("test_report.json", "w");
+        FILE *file = fopen("test_report.json", "w");
         assert(file != NULL);
 
         fprintf(file, "%s", testsStatisticsStr);
@@ -205,7 +225,8 @@ static void destroyTestSuite(void)
         testsStatisticsStr = NULL;
     }
 
-    if (remove(LOG_FILE) != 0) {
+    if (remove(LOG_FILE) != 0)
+    {
         printf("Could not delete file [%s]\n", LOG_FILE);
     }
 }
@@ -230,7 +251,7 @@ static void initTestSuite(void)
 #endif
 
 /**
- * @def CJSONLOGGER_TEST_DEBUG
+ * @def CJSONLOGGER_TEST_RELEASE
  *
  * @brief When testing a release build.
  */
@@ -239,7 +260,7 @@ static void initTestSuite(void)
 #endif
 
 /**
- * @def CJSONLOGGER_TEST_DEBUG
+ * @def CJSONLOGGER_TEST_DIST
  *
  * @brief When testing a distribution build.
  */
@@ -251,6 +272,7 @@ static void initTestSuite(void)
     cJSON_AddItemToObject(s_g_testStatistics, "Failed", cJSON_CreateArray());
 
     int ret = atexit(destroyTestSuite);
+    _unused(ret);
     assert(ret == 0);
 }
 
@@ -261,18 +283,21 @@ static void initTestSuite(void)
  * @param expectedResult The expected result (exit status) of the test.
  * @param childExitStatus The actual result (exit status) of the test.
  */
-static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitStatus)
+static void pushStats(TestInfo_s *testInfo, int expectedResult, int childExitStatus)
 {
-    cJSON* testStatusArray = NULL;
-    if (testInfo->status == PASSED) {
+    cJSON *testStatusArray = NULL;
+    if (testInfo->status == PASSED)
+    {
         testStatusArray = cJSON_GetObjectItem(s_g_testStatistics, "Passed");
-    } else {
+    }
+    else
+    {
         testStatusArray = cJSON_GetObjectItem(s_g_testStatistics, "Failed");
     }
 
     assert(testStatusArray != NULL);
 
-    cJSON* report = cJSON_CreateObject();
+    cJSON *report = cJSON_CreateObject();
 
     assert(report != NULL);
 
@@ -290,7 +315,7 @@ static void pushStats(TestInfo_s* testInfo, int expectedResult, int childExitSta
  *
  * @return void* Pointer to the name of first file that was created.
  */
-static void* fileWatcherHandler(void* ctx)
+static void *fileWatcherHandler(void *ctx)
 {
     assert(ctx != NULL);
 
@@ -302,25 +327,28 @@ static void* fileWatcherHandler(void* ctx)
 
     char buffer[1024];
 
-    pthread_kill(*(pthread_t*)ctx, SIGUSR1);
+    pthread_kill(*(pthread_t *)ctx, SIGUSR1);
 
     ssize_t length = read(fd, buffer, sizeof(buffer));
+    _unused(length);
     assert(length >= 0);
 
-    struct inotify_event* event = (struct inotify_event*)&buffer;
+    struct inotify_event *event = (struct inotify_event *)&buffer;
 
     assert(event->len > 0);
     assert(event->mask & IN_CREATE);
 
     int res = -1;
+    _unused(res);
 
     res = inotify_rm_watch(fd, wd);
+
     assert(res == 0);
 
     res = close(fd);
     assert(res == 0);
 
-    char* result = (char*)malloc(strlen(event->name) + 1);
+    char *result = (char *)malloc(strlen(event->name) + 1);
     assert(result != NULL);
 
     strncpy(result, event->name, strlen(event->name));
@@ -338,26 +366,31 @@ static void* fileWatcherHandler(void* ctx)
  * @param ... Additional arguments to pass to the test function.
  */
 #define RUN_TEST(expectedResult, func, ...)                                                                                   \
-    do {                                                                                                                      \
+    do                                                                                                                        \
+    {                                                                                                                         \
         s_g_pid = fork();                                                                                                     \
-        if (s_g_pid == 0) {                                                                                                   \
+        if (s_g_pid == 0)                                                                                                     \
+        {                                                                                                                     \
             freeChildResources();                                                                                             \
             return func(__VA_ARGS__);                                                                                         \
         }                                                                                                                     \
                                                                                                                               \
-        else {                                                                                                                \
+        else                                                                                                                  \
+        {                                                                                                                     \
             TestInfo_s testInfo;                                                                                              \
             int childExitStatus;                                                                                              \
             snprintf(testInfo.name, MAX_TEST_NAME_LEN, "%s", FUNC_NAME(func));                                                \
             printf("Running test [%s] ...\n", testInfo.name);                                                                 \
             wait(&childExitStatus);                                                                                           \
                                                                                                                               \
-            if (expectedResult == childExitStatus) {                                                                          \
+            if (expectedResult == childExitStatus)                                                                            \
+            {                                                                                                                 \
                 testInfo.status = PASSED;                                                                                     \
                 printf("Test [%s] passed\n", testInfo.name);                                                                  \
             }                                                                                                                 \
                                                                                                                               \
-            else {                                                                                                            \
+            else                                                                                                              \
+            {                                                                                                                 \
                 testInfo.status = FAILED;                                                                                     \
                 printf("Test [%s] failed, expected status [%d], got [%d]\n", testInfo.name, expectedResult, childExitStatus); \
             }                                                                                                                 \

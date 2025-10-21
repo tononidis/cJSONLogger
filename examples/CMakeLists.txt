@@ -12,9 +12,6 @@ target_compile_options(cJSONLogger PRIVATE
     -Wconversion
     -Wsign-conversion
     -fstack-protector-strong
-    $<$<CONFIG:Debug>:-O0 -g>
-    $<$<CONFIG:Release>:-O3 -g>
-    $<$<CONFIG:Dist>:-O3 -DNDEBUG>
 )
 
 target_link_libraries(cJSONLoggerExample cJSONLogger pthread)
