@@ -60,6 +60,9 @@ bin
 obj
 *.make
 
+# CMake
+build/
+
 # vscode
 .vscode/
 

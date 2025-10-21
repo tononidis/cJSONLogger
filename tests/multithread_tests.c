@@ -136,7 +136,7 @@ static void* fileWatcherHandler(void* ctx)
 
     while (atomic_load(&s_g_threadFlag) != 0) {
         char buffer[1024];
-        int length = read(fd, buffer, sizeof(buffer));
+        ssize_t length = read(fd, buffer, sizeof(buffer));
         assert(length >= 0);
         struct inotify_event* event = (struct inotify_event*)&buffer;
 

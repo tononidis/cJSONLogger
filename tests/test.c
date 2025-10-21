@@ -117,7 +117,7 @@ static int test_cJSONLogger_log_no_node(void)
         RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
-    if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
+    if (strncmp(funcNameEntry->valuestring, __func__, strlen(__func__)) != 0) {
         RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
@@ -219,7 +219,7 @@ static int test_cJSONLogger_log_one_node(void)
         RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
-    if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
+    if (strncmp(funcNameEntry->valuestring, __func__, strlen(__func__)) != 0) {
         RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
@@ -332,7 +332,7 @@ static int test_cJSONLogger_log_three_nodes(void)
         RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 
-    if (strncmp(funcNameEntry->valuestring, __FUNCTION__, strlen(__FUNCTION__)) != 0) {
+    if (strncmp(funcNameEntry->valuestring, __func__, strlen(__func__)) != 0) {
         RELEASE_RESOURCE_AND_RETURN_FAIL(jsonLogsDoc, cJSON_Delete);
     }
 

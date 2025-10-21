@@ -134,7 +134,7 @@ static char* readFile(const char* fileName)
     }
 
     fseek(file, 0, SEEK_END);
-    size_t logSize = ftell(file);
+    size_t logSize = (size_t) ftell(file);
     fseek(file, 0, SEEK_SET);
 
     char* logData = malloc(logSize + 1);
@@ -304,7 +304,7 @@ static void* fileWatcherHandler(void* ctx)
 
     pthread_kill(*(pthread_t*)ctx, SIGUSR1);
 
-    int length = read(fd, buffer, sizeof(buffer));
+    ssize_t length = read(fd, buffer, sizeof(buffer));
     assert(length >= 0);
 
     struct inotify_event* event = (struct inotify_event*)&buffer;

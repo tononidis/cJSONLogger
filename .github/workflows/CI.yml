@@ -20,16 +20,14 @@ jobs:
       with:
         submodules: true
 
-    - name: Install premake5
-      uses: abel0b/setup-premake@v2.4
-      with:
-        version: "5.0.0-beta7"
+    - name: Install cmake
+      uses: threeal/cmake-action@v2.1.0
 
     - name: Build and Test
       run: |
-        premake5 gmake
-        make config=${{ matrix.configuration }}
-        ./bin/${{ matrix.configuration }}/cJSONLoggerTests/cJSONLoggerTests
+        cmake -S . -B build/${{ matrix.configuration }} -DCMAKE_BUILD_TYPE==${{ matrix.configuration }}
+        cmake --build build/${{ matrix.configuration }}
+        ./build/${{ matrix.configuration }}/tests/cJSONLoggerTests
 
     - name: Evaluate Test Results
       run: |
@@ -48,8 +46,8 @@ jobs:
 
     - name: Valgrind Report
       run: |
-        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_MTT.xml ./bin/${{ matrix.configuration }}/cJSONLoggerMultiThreadTests/cJSONLoggerMultiThreadTests
-        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_T_%p.xml ./bin/${{ matrix.configuration }}/cJSONLoggerTests/cJSONLoggerTests
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_MTT.xml ./build/${{ matrix.configuration }}/tests/cJSONLoggerMultiThreadTests
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --suppressions=valgrind.supp --xml=yes --xml-file=valgrind_report_T_%p.xml ./build/${{ matrix.configuration }}/tests/cJSONLoggerTests
 
         found_error=0
         for file in valgrind_report_*.xml; do
@@ -76,7 +74,7 @@ jobs:
 
     - name: Helgrind Report
       run: |
-        valgrind --tool=helgrind --suppressions=helgrind.supp --xml=yes --xml-file=helgrind_report.xml ./bin/${{ matrix.configuration }}/cJSONLoggerMultiThreadTests/cJSONLoggerMultiThreadTests
+        valgrind --tool=helgrind --suppressions=helgrind.supp --xml=yes --xml-file=helgrind_report.xml ./build/${{ matrix.configuration }}/tests/cJSONLoggerMultiThreadTests
         valgrind-ci "helgrind_report.xml" --abort-on-error
         status=$?
         if [ $status -ne 0 ]; then
