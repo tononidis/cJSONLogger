@@ -18,15 +18,15 @@ target_compile_options(cJSONLogger PRIVATE
     -Wconversion
     -Wsign-conversion
     -fstack-protector-strong
-    $<$<CONFIG:Debug>:-O0 -g>
-    $<$<CONFIG:Release>:-O3 -g>
-    $<$<CONFIG:Dist>:-O3 -DNDEBUG>
+    $<$<CONFIG:debug>:-O0 -g>
+    $<$<CONFIG:release>:-O3 -g>
+    $<$<CONFIG:dist>:-O3 -DNDEBUG>
 )
 
 target_compile_definitions(cJSONLogger PRIVATE
-    $<$<CONFIG:Debug>:CJSONLOGGER_DEBUG>
-    $<$<CONFIG:Release>:CJSONLOGGER_RELEASE>
-    $<$<CONFIG:Dist>:CJSONLOGGER_DIST>
+    $<$<CONFIG:debug>:CJSONLOGGER_DEBUG>
+    $<$<CONFIG:release>:CJSONLOGGER_RELEASE>
+    $<$<CONFIG:dist>:CJSONLOGGER_DIST>
 )
 
 add_subdirectory(examples)
